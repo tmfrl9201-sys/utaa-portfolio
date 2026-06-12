@@ -511,10 +511,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
         <div class="fld">
           <label>구분</label>
           <div style="display:flex;gap:6px;margin-top:2px">
-            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cTypeLabelPersonal">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s;white-space:nowrap" id="cTypeLabelPersonal">
               <input type="radio" name="clientType" id="cTypePersonal" value="개인" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncClientTypeStyle()"> 개인
             </label>
-            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cTypeLabelCorp">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s;white-space:nowrap" id="cTypeLabelCorp">
               <input type="radio" name="clientType" id="cTypeCorp" value="법인" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncClientTypeStyle()"> 법인
             </label>
           </div>
@@ -532,13 +532,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
       <div class="fld">
         <label>발행 유형</label>
         <div style="display:flex;gap:6px;margin-top:2px">
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cBillLabelCash">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s;white-space:nowrap" id="cBillLabelCash">
             <input type="radio" name="billType" id="cBillCash" value="현금영수증" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncBillTypeStyle()"> 현금영수증
           </label>
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cBillLabelTax">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s;white-space:nowrap" id="cBillLabelTax">
             <input type="radio" name="billType" id="cBillTax" value="세금계산서" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncBillTypeStyle()"> 세금계산서
           </label>
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cBillLabelEtc">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s;white-space:nowrap" id="cBillLabelEtc">
             <input type="radio" name="billType" id="cBillEtc" value="기타" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncBillTypeStyle()"> 기타
           </label>
         </div>
