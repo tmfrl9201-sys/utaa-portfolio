@@ -507,21 +507,48 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
   <div id="fmTabClient" class="fm-tab-pane" style="padding-top:4px">
     <div class="int-section">
       <div class="int-section-title">🏢 건축주 정보</div>
+      <div class="fr">
+        <div class="fld">
+          <label>구분</label>
+          <div style="display:flex;gap:6px;margin-top:2px">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cTypeLabelPersonal">
+              <input type="radio" name="clientType" id="cTypePersonal" value="개인" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncClientTypeStyle()"> 개인
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cTypeLabelCorp">
+              <input type="radio" name="clientType" id="cTypeCorp" value="법인" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncClientTypeStyle()"> 법인
+            </label>
+          </div>
+        </div>
+        <div class="fld"><label>이름 / 법인명</label><input id="cName" placeholder="홍길동 / ㈜예시회사" oninput="updateClientBadge()"></div>
+      </div>
+      <div class="fr">
+        <div class="fld"><label>연락처</label><input id="cPhone" placeholder="010-0000-0000" oninput="updateClientBadge()"></div>
+        <div class="fld"><label>이메일</label><input id="cEmail" type="email" placeholder="example@email.com" oninput="updateClientBadge()"></div>
+      </div>
+    </div>
+
+    <div class="int-section">
+      <div class="int-section-title">🧾 계산서 정보</div>
       <div class="fld">
-        <label>구분</label>
-        <div style="display:flex;gap:10px;padding:6px 0">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="radio" name="clientType" id="cTypePersonal" value="개인" style="accent-color:var(--utaa)" onchange="updateClientBadge()"> 개인
+        <label>발행 유형</label>
+        <div style="display:flex;gap:6px;margin-top:2px">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cBillLabelCash">
+            <input type="radio" name="billType" id="cBillCash" value="현금영수증" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncBillTypeStyle()"> 현금영수증
           </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="radio" name="clientType" id="cTypeCorp" value="법인" style="accent-color:var(--utaa)" onchange="updateClientBadge()"> 법인
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cBillLabelTax">
+            <input type="radio" name="billType" id="cBillTax" value="세금계산서" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncBillTypeStyle()"> 세금계산서
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;cursor:pointer;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);transition:all .15s" id="cBillLabelEtc">
+            <input type="radio" name="billType" id="cBillEtc" value="기타" style="accent-color:var(--utaa)" onchange="updateClientBadge();syncBillTypeStyle()"> 기타
           </label>
         </div>
       </div>
-      <div class="fld"><label>이름 / 법인명</label><input id="cName" placeholder="홍길동 / ㈜예시회사" oninput="updateClientBadge()"></div>
-      <div class="fld"><label>연락처</label><input id="cPhone" placeholder="010-0000-0000" oninput="updateClientBadge()"></div>
-      <div class="fld"><label>이메일</label><input id="cEmail" type="email" placeholder="example@email.com" oninput="updateClientBadge()"></div>
+      <div class="fr">
+        <div class="fld"><label>사업자번호 / 주민번호</label><input id="cBillNo" placeholder="000-00-00000" oninput="updateClientBadge()"></div>
+        <div class="fld"><label>계산서 발행 이메일</label><input id="cBillEmail" type="email" placeholder="tax@company.com" oninput="updateClientBadge()"></div>
+      </div>
     </div>
+
     <div class="int-section">
       <div class="int-section-title">📝 건축주 메모</div>
       <div class="fld">
@@ -943,7 +970,10 @@ function saveProj() {
     clientName: document.getElementById('cName').value.trim(),
     clientPhone: document.getElementById('cPhone').value.trim(),
     clientEmail: document.getElementById('cEmail').value.trim(),
-    clientMemo: document.getElementById('cMemo').value.trim()
+    clientMemo: document.getElementById('cMemo').value.trim(),
+    clientBillType: (function(){ var r=document.querySelector('input[name="billType"]:checked'); return r?r.value:''; })(),
+    clientBillNo: document.getElementById('cBillNo').value.trim(),
+    clientBillEmail: document.getElementById('cBillEmail').value.trim()
   };
   pushToSheet(data, function(ok) {
     saving = false;
@@ -2928,6 +2958,25 @@ function calcPermitPeriod() {
   } else { badge.style.display = 'none'; }
 }
 
+function syncClientTypeStyle() {
+  var val = (document.querySelector('input[name="clientType"]:checked') || {}).value;
+  ['Personal','Corp'].forEach(function(k) {
+    var lbl = document.getElementById('cTypeLabel'+k);
+    var isOn = (k==='Personal' && val==='개인') || (k==='Corp' && val==='법인');
+    if(lbl){ lbl.style.borderColor = isOn ? 'var(--utaa)' : 'var(--br2)'; lbl.style.color = isOn ? 'var(--utaa)' : ''; lbl.style.background = isOn ? '#f5fce6' : 'var(--bg)'; }
+  });
+}
+
+function syncBillTypeStyle() {
+  var val = (document.querySelector('input[name="billType"]:checked') || {}).value;
+  ['Cash','Tax','Etc'].forEach(function(k) {
+    var lbl = document.getElementById('cBillLabel'+k);
+    var map = {Cash:'현금영수증', Tax:'세금계산서', Etc:'기타'};
+    var isOn = val === map[k];
+    if(lbl){ lbl.style.borderColor = isOn ? 'var(--utaa)' : 'var(--br2)'; lbl.style.color = isOn ? 'var(--utaa)' : ''; lbl.style.background = isOn ? '#f5fce6' : 'var(--bg)'; }
+  });
+}
+
 function updateClientBadge() {
   var fields = ['cName','cPhone','cEmail','cMemo'];
   var hasType = document.querySelector('input[name="clientType"]:checked');
@@ -2937,10 +2986,12 @@ function updateClientBadge() {
 }
 
 function clearClientFields() {
-  ['cName','cPhone','cEmail','cMemo'].forEach(function(id){
+  ['cName','cPhone','cEmail','cMemo','cBillNo','cBillEmail'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value='';
   });
   document.querySelectorAll('input[name="clientType"]').forEach(function(r){r.checked=false;});
+  document.querySelectorAll('input[name="billType"]').forEach(function(r){r.checked=false;});
+  syncClientTypeStyle(); syncBillTypeStyle();
   updateClientBadge();
 }
 
@@ -2949,9 +3000,15 @@ function loadClientFields(p) {
   document.getElementById('cPhone').value = p.clientPhone || '';
   document.getElementById('cEmail').value = p.clientEmail || '';
   document.getElementById('cMemo').value = p.clientMemo || '';
+  document.getElementById('cBillNo').value = p.clientBillNo || '';
+  document.getElementById('cBillEmail').value = p.clientBillEmail || '';
   document.querySelectorAll('input[name="clientType"]').forEach(function(r){
     r.checked = r.value === (p.clientType || '');
   });
+  document.querySelectorAll('input[name="billType"]').forEach(function(r){
+    r.checked = r.value === (p.clientBillType || '');
+  });
+  syncClientTypeStyle(); syncBillTypeStyle();
   updateClientBadge();
 }
 
