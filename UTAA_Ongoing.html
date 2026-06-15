@@ -50,14 +50,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .body{display:flex;flex:1;overflow:hidden}
 
 /* ── 리스트 패널 ── */
-.list-panel{display:flex;flex-direction:column;overflow:hidden;transition:width .3s cubic-bezier(.4,0,.2,1);width:100%;flex-shrink:0}
+.list-panel{display:flex;flex-direction:column;overflow:hidden;transition:width .3s cubic-bezier(.4,0,.2,1);width:100%;flex-shrink:0;min-height:0;height:100%}
 .list-panel.split{width:42%}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px;flex-shrink:0}
 .stat-card{background:var(--bg);border-radius:var(--r);border:0.5px solid var(--br);padding:10px 14px}
 .stat-label{font-size:10px;color:var(--tx2);margin-bottom:3px}
 .stat-val{font-size:20px;font-weight:600;color:var(--tx)}
 .stat-sub{font-size:10px;color:var(--tx3);margin-top:1px}
-.list-scroll{flex:1;overflow-y:auto;padding:0 16px 16px}
+.list-scroll{flex:1;min-height:0;overflow-y:auto;padding:0 16px 16px}
 .list-header{display:grid;gap:6px;padding:4px 10px;font-size:10px;color:var(--tx3);border-bottom:0.5px solid var(--br);margin-bottom:4px}
 .lh-full{grid-template-columns:22px 1fr 68px 58px 60px 92px 58px 54px}
 .lh-compact{grid-template-columns:22px 1fr 68px 56px}
@@ -115,8 +115,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sec-title{font-size:10px;font-weight:600;color:var(--tx2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:0.5px solid var(--br)}
 .ms{margin-bottom:16px}
 .calc-badge{font-size:11px;color:#3B6D11;background:#EAF3DE;border:0.5px solid var(--utaa);border-radius:20px;padding:2px 9px;display:inline-block;margin-top:5px}
-.radio-row{display:flex;gap:6px}
-.radio-lbl{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:6px;border-radius:var(--r);border:0.5px solid var(--br2);cursor:pointer;white-space:nowrap;transition:all .15s}
+.radio-row{display:flex;gap:6px;flex-wrap:wrap}
+.radio-lbl{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:6px 14px;border-radius:var(--r);border:0.5px solid var(--br2);cursor:pointer;white-space:nowrap;transition:all .15s}
 .radio-lbl:hover{border-color:var(--utaa2)}
 .radio-lbl.on{border-color:var(--utaa);color:var(--utaa);background:var(--utaa-bg)}
 .pcard{background:var(--bg2);border-radius:var(--r);padding:9px 11px;margin-bottom:7px;border:0.5px solid var(--br)}
@@ -199,7 +199,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="stat-card"><div class="stat-label"><span class="badge b-permit" style="font-size:9px">인허가중</span></div><div class="stat-val" id="cntP">0</div><div class="stat-sub">인허가 진행</div></div>
       <div class="stat-card"><div class="stat-label"><span class="badge b-plan" style="font-size:9px">계획중</span></div><div class="stat-val" id="cntPl">0</div><div class="stat-sub">수주 검토</div></div>
     </div>
-    <div style="padding:0 16px 6px">
+    <div style="padding:0 16px 6px;flex-shrink:0">
       <div class="list-header lh-full" id="listHeader">
         <div></div><div>프로젝트</div><div>상태</div><div>담당자</div><div>위치</div><div>착공 / 준공예정</div><div style="text-align:right">연면적</div><div style="text-align:right">공사비</div>
       </div>
