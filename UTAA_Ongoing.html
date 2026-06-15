@@ -163,7 +163,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="filterbar">
   <div class="search-wrap">
     <i class="ti ti-search"></i>
-    <input type="text" id="searchInput" placeholder="프로젝트명, 위치 검색..." oninput="applyFilter()">
+    <input type="text" id="searchInput" placeholder="프로젝트명, 주소 검색..." oninput="applyFilter()">
   </div>
   <div class="divider-v"></div>
   <button class="filter-btn on" data-status="all" onclick="setStatus(this)">전체</button>
@@ -204,7 +204,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div style="padding:0 16px 6px;flex-shrink:0">
       <div class="list-header lh-full" id="listHeader">
-        <div></div><div>프로젝트</div><div>상태</div><div>담당자</div><div>위치</div><div>착공 / 준공예정</div><div style="text-align:right">연면적</div><div style="text-align:right">공사비</div>
+        <div></div><div>프로젝트</div><div>상태</div><div>담당자</div><div>주소</div><div>착공 / 준공예정</div><div style="text-align:right">연면적</div><div style="text-align:right">공사비</div>
       </div>
     </div>
     <div class="list-scroll" id="listScroll">
@@ -259,9 +259,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           </div>
           <div class="fr">
             <div class="fld"><label>용도</label><input id="fUse" placeholder="근린생활시설" oninput="updateEpSub()"></div>
-            <div class="fld"><label>위치 (구/시)</label><input id="fLoc" placeholder="강남구" oninput="updateEpSub()"></div>
           </div>
-          <div class="fld"><label>주소</label><input id="fAddr" placeholder="서울특별시 강남구 논현동 000-00"></div>
+          <div class="fld"><label>주소</label><input id="fAddr" placeholder="서울특별시 강남구 논현동 000-00" oninput="updateEpSub()"></div>
           <div class="fr">
             <div class="fld"><label>대지면적 (㎡)</label><input id="fAreaS" type="number" placeholder="182"></div>
             <div class="fld"><label>연면적 (㎡)</label><input id="fAreaT" type="number" placeholder="509" oninput="calcAllPerPy()"></div>
@@ -499,7 +498,7 @@ function render() {
   var list = projects.filter(function(p) {
     var sMatch = statusFilter === 'all' || p.status === statusFilter;
     var mMatch = !manFilter || p.manager === manFilter;
-    var qMatch = !q || (p.name||'').toLowerCase().includes(q) || (p.loc||'').toLowerCase().includes(q) || (p.manager||'').toLowerCase().includes(q) || (p.use||'').toLowerCase().includes(q);
+    var qMatch = !q || (p.name||'').toLowerCase().includes(q) || (p.addr||'').toLowerCase().includes(q) || (p.manager||'').toLowerCase().includes(q) || (p.use||'').toLowerCase().includes(q);
     return sMatch && mMatch && qMatch;
   });
   console.log('render - projects:', projects.length, 'list:', list.length, 'statusFilter:', statusFilter);
@@ -541,7 +540,7 @@ function render() {
     var costStr = p.dCost ? p.dCost+'억' : '—';
     if(isCompact) {
       row.innerHTML = '<div style="font-size:10px;color:var(--tx3);text-align:center">'+(i+1).toString().padStart(2,'0')+'</div>'
-        +'<div><div class="pname">'+p.name+'</div><div class="psub">'+(p.use||'')+' · '+(p.loc||'')+'</div></div>'
+        +'<div><div class="pname">'+p.name+'</div><div class="psub">'+(p.use||'')+'</div></div>'
         +'<div>'+bdg+'</div>'
         +'<div class="celln" style="text-align:right">'+costStr+'</div>';
     } else {
@@ -549,7 +548,7 @@ function render() {
         +'<div><div class="pname">'+p.name+'</div><div class="psub">'+(p.use||'')+'</div></div>'
         +'<div>'+bdg+'</div>'
         +'<div class="person-cell"><i class="ti ti-user" style="font-size:10px"></i>'+(p.manager||'—')+'</div>'
-        +'<div class="cell">'+(p.loc||'—')+'</div>'
+        +'<div class="cell">'+(p.addr ? p.addr.replace(/^(서울특별시|경기도|인천광역시|부산광역시|대구광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도|제주특별자치도)\s*/,'').split(' ').slice(0,2).join(' ') : '—')+'</div>'
         +'<div class="cell">'+startStr+' / '+expStr+'</div>'
         +'<div class="celln" style="text-align:right">'+areaStr+'</div>'
         +'<div class="celln" style="text-align:right">'+costStr+'</div>';
@@ -565,7 +564,7 @@ function render() {
     hdr.innerHTML = '<div></div><div>프로젝트</div><div>상태</div><div style="text-align:right">공사비</div>';
   } else {
     hdr.className = 'list-header lh-full';
-    hdr.innerHTML = '<div></div><div>프로젝트</div><div>상태</div><div>담당자</div><div>위치</div><div>착공 / 준공예정</div><div style="text-align:right">연면적</div><div style="text-align:right">공사비</div>';
+    hdr.innerHTML = '<div></div><div>프로젝트</div><div>상태</div><div>담당자</div><div>주소</div><div>착공 / 준공예정</div><div style="text-align:right">연면적</div><div style="text-align:right">공사비</div>';
   }
 }
 
@@ -640,7 +639,6 @@ function loadForm(p) {
   document.getElementById('fManagerShort').value = p.managerShort||'';
   document.getElementById('fStatus').value = p.status||'계획중';
   document.getElementById('fUse').value = p.use||'';
-  document.getElementById('fLoc').value = p.loc||'';
   document.getElementById('fAddr').value = p.addr||'';
   document.getElementById('fAreaS').value = p.areaS||'';
   document.getElementById('fAreaT').value = p.areaT||'';
@@ -674,7 +672,7 @@ function loadForm(p) {
 }
 
 function clearForm() {
-  ['epTitle','fManager','fManagerDirect','fManagerShort','fUse','fLoc','fAddr','fAreaS','fAreaT','fFloor','fNas',
+  ['epTitle','fManager','fManagerDirect','fManagerShort','fUse','fAddr','fAreaS','fAreaT','fFloor','fNas',
    'dFee','dContract','dPermitApply','dPermitDone','dStart','dExpected','dCost','dCostDate','dScheduleMemo',
    'cName','cPhone','cEmail','cBillNo','cBillEmail','cMemo','fMemo'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
@@ -699,7 +697,7 @@ function saveProject() {
     manager:document.getElementById('fManager').value.trim(),
     managerDirect:document.getElementById('fManagerDirect').value.trim(),
     managerShort:document.getElementById('fManagerShort').value.trim(),
-    use:document.getElementById('fUse').value.trim(), loc:document.getElementById('fLoc').value.trim(),
+    use:document.getElementById('fUse').value.trim(),
     addr:document.getElementById('fAddr').value.trim(),
     areaS:parseFloat(document.getElementById('fAreaS').value)||0,
     areaT:parseFloat(document.getElementById('fAreaT').value)||0,
@@ -798,9 +796,11 @@ function onStatusChange() {
 
 function updateEpSub() {
   var use = document.getElementById('fUse').value;
-  var loc = document.getElementById('fLoc').value;
+  var addr = document.getElementById('fAddr').value;
   var mgr = document.getElementById('fManager').value;
-  var parts = [use,loc].filter(Boolean);
+  // 주소에서 시도 제거 후 앞 2단어만 표시
+  var shortAddr = addr ? addr.replace(/^(서울특별시|경기도|인천광역시|부산광역시|대구광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도|제주특별자치도)\s*/,'').split(' ').slice(0,2).join(' ') : '';
+  var parts = [use, shortAddr].filter(Boolean);
   if(mgr) parts.push('담당: '+mgr);
   document.getElementById('epSub').textContent = parts.join(' · ');
 }
