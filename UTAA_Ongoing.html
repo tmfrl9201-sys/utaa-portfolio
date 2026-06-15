@@ -52,7 +52,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* ── 리스트 패널 ── */
 .list-panel{display:flex;flex-direction:column;overflow:hidden;transition:width .3s cubic-bezier(.4,0,.2,1);width:100%;flex-shrink:0;min-height:0;height:100%}
 .list-panel.split{width:42%}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px;flex-shrink:0}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px 16px;flex-shrink:0}
 .stat-card{background:var(--bg);border-radius:var(--r);border:0.5px solid var(--br);padding:10px 14px}
 .stat-label{font-size:10px;color:var(--tx2);margin-bottom:3px}
 .stat-val{font-size:20px;font-weight:600;color:var(--tx)}
@@ -71,6 +71,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .b-plan{background:#EAF3DE;color:#3B6D11}
 .b-permit{background:#FAEEDA;color:#854F0B}
 .b-constr{background:#EEEDFE;color:#534AB7}
+.b-hold{background:#F1EFE8;color:#5F5E5A}
 .pname{font-size:12px;font-weight:500;color:var(--tx)}
 .psub{font-size:10px;color:var(--tx3);margin-top:1px}
 .cell{font-size:11px;color:var(--tx2)}
@@ -116,7 +117,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ms{margin-bottom:16px}
 .calc-badge{font-size:11px;color:#3B6D11;background:#EAF3DE;border:0.5px solid var(--utaa);border-radius:20px;padding:2px 9px;display:inline-block;margin-top:5px}
 .radio-row{display:flex;gap:6px;flex-wrap:wrap}
-.radio-lbl{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:6px 14px;border-radius:var(--r);border:0.5px solid var(--br2);cursor:pointer;white-space:nowrap;transition:all .15s}
+.radio-lbl{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:6px 12px;border-radius:var(--r);border:0.5px solid var(--br2);cursor:pointer;white-space:nowrap;overflow:hidden;max-width:100%;transition:all .15s}
 .radio-lbl:hover{border-color:var(--utaa2)}
 .radio-lbl.on{border-color:var(--utaa);color:var(--utaa);background:var(--utaa-bg)}
 .pcard{background:var(--bg2);border-radius:var(--r);padding:9px 11px;margin-bottom:7px;border:0.5px solid var(--br)}
@@ -169,6 +170,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="filter-btn" data-status="계획중" onclick="setStatus(this)">계획중</button>
   <button class="filter-btn" data-status="인허가중" onclick="setStatus(this)">인허가중</button>
   <button class="filter-btn" data-status="공사중" onclick="setStatus(this)">공사중</button>
+  <button class="filter-btn" data-status="홀드" onclick="setStatus(this)">홀드</button>
   <div class="divider-v"></div>
   <div class="sel-wrap">
     <select id="managerFilter" onchange="applyFilter()">
@@ -195,9 +197,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="list-panel" id="listPanel">
     <div class="stats-row" id="statsRow">
       <div class="stat-card"><div class="stat-label">전체 진행중</div><div class="stat-val" id="cntAll">0</div><div class="stat-sub">개 프로젝트</div></div>
-      <div class="stat-card"><div class="stat-label"><span class="badge b-constr" style="font-size:9px">공사중</span></div><div class="stat-val" id="cntC">0</div><div class="stat-sub">착공 진행</div></div>
+      <div class="stat-card"><div class="stat-label"><span class="badge b-plan" style="font-size:9px">계획중</span></div><div class="stat-val" id="cntPl">0</div><div class="stat-sub">설계 진행</div></div>
       <div class="stat-card"><div class="stat-label"><span class="badge b-permit" style="font-size:9px">인허가중</span></div><div class="stat-val" id="cntP">0</div><div class="stat-sub">인허가 진행</div></div>
-      <div class="stat-card"><div class="stat-label"><span class="badge b-plan" style="font-size:9px">계획중</span></div><div class="stat-val" id="cntPl">0</div><div class="stat-sub">수주 검토</div></div>
+      <div class="stat-card"><div class="stat-label"><span class="badge b-constr" style="font-size:9px">공사중</span></div><div class="stat-val" id="cntC">0</div><div class="stat-sub">착공 진행</div></div>
+      <div class="stat-card"><div class="stat-label"><span class="badge b-hold" style="font-size:9px">홀드</span></div><div class="stat-val" id="cntH">0</div><div class="stat-sub">보류 중</div></div>
     </div>
     <div style="padding:0 16px 6px;flex-shrink:0">
       <div class="list-header lh-full" id="listHeader">
@@ -246,7 +249,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <div class="fld"><label>담당자</label><input id="fManager" placeholder="홍길동" oninput="updateEpSub()"></div>
             <div class="fld"><label>상태</label>
               <select id="fStatus" onchange="onStatusChange()">
-                <option>계획중</option><option>인허가중</option><option>공사중</option>
+                <option>계획중</option><option>인허가중</option><option>공사중</option><option>홀드</option>
               </select>
             </div>
           </div>
@@ -502,8 +505,8 @@ function render() {
   console.log('render - projects:', projects.length, 'list:', list.length, 'statusFilter:', statusFilter);
 
   // 정렬
-  var statusOrder = {'계획중':0,'인허가중':1,'공사중':2};
-  if(sort==='status') list.sort(function(a,b){return statusOrder[a.status]-statusOrder[b.status];});
+  var statusOrder = {'계획중':0,'인허가중':1,'공사중':2,'홀드':3};
+  if(sort==='status') list.sort(function(a,b){return (statusOrder[a.status]||0)-(statusOrder[b.status]||0);});
   else if(sort==='completion') list.sort(function(a,b){return (a.dExpected||'9999')>(b.dExpected||'9999')?1:-1;});
 
   // 통계
@@ -511,6 +514,7 @@ function render() {
   document.getElementById('cntC').textContent = projects.filter(function(p){return p.status==='공사중';}).length;
   document.getElementById('cntP').textContent = projects.filter(function(p){return p.status==='인허가중';}).length;
   document.getElementById('cntPl').textContent = projects.filter(function(p){return p.status==='계획중';}).length;
+  document.getElementById('cntH').textContent = projects.filter(function(p){return p.status==='홀드';}).length;
 
   var scroll = document.getElementById('listScroll');
   var noRes = document.getElementById('noResult');
@@ -566,7 +570,7 @@ function render() {
 }
 
 function badgeHtml(status) {
-  var cls = status==='공사중'?'b-constr':status==='인허가중'?'b-permit':'b-plan';
+  var cls = status==='공사중'?'b-constr':status==='인허가중'?'b-permit':status==='홀드'?'b-hold':'b-plan';
   return '<span class="badge '+cls+'">'+status+'</span>';
 }
 
@@ -606,6 +610,7 @@ function openEdit(id) {
   loadForm(p);
   document.getElementById('delBtn').style.display = '';
   var isConstr = p.status==='공사중';
+  var isPermitOrConstr = p.status==='인허가중'||p.status==='공사중'||p.status==='홀드';
   document.getElementById('completeBtn').style.display = isConstr?'':'none';
   document.getElementById('completeBtnBottom').style.display = '';
   onStatusChange();
@@ -773,11 +778,11 @@ function moveToPortfolio() {
 function onStatusChange() {
   var v = document.getElementById('fStatus').value;
   var bdg = document.getElementById('epBadge');
-  var map = {'계획중':'b-plan','인허가중':'b-permit','공사중':'b-constr'};
+  var map = {'계획중':'b-plan','인허가중':'b-permit','공사중':'b-constr','홀드':'b-hold'};
   bdg.className = 'badge '+(map[v]||'b-plan');
   bdg.textContent = v;
   var isConstr = v==='공사중';
-  var isPermitOrConstr = v==='인허가중'||v==='공사중';
+  var isPermitOrConstr = v==='인허가중'||v==='공사중'||v==='홀드';
   document.getElementById('completeBtn').style.display = editId&&isConstr?'':'none';
   var pt = document.getElementById('partnerTab');
   var pl = document.getElementById('partnerLocked');
