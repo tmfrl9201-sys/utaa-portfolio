@@ -513,16 +513,17 @@ function render() {
   document.getElementById('cntPl').textContent = projects.filter(function(p){return p.status==='계획중';}).length;
 
   var scroll = document.getElementById('listScroll');
-  scroll.innerHTML = '';
   var noRes = document.getElementById('noResult');
 
+  // 기존 proj-row들만 제거 (noResult는 유지)
+  var rows = scroll.querySelectorAll('.proj-row');
+  rows.forEach(function(r){ r.remove(); });
+
   if(list.length === 0) {
-    noRes.style.display = 'block';
-    scroll.appendChild(noRes);
+    if(noRes) noRes.style.display = 'block';
     return;
   }
-  noRes.style.display = 'none';
-  scroll.appendChild(noRes);
+  if(noRes) noRes.style.display = 'none';
 
   var isCompact = panelOpen;
   list.forEach(function(p, i) {
