@@ -430,16 +430,25 @@ function jsonp(url, cb) {
 function loadFromSheet() {
   setSyncState('loading', '구글 시트에서 불러오는 중...');
   jsonp(API + '?action=ongoing_read', function(d) {
-    if(d && d.projects) {
-      projects = d.projects.map(function(p) {
-        // partners, mats는 JSON 문자열로 저장됨
+    console.log('API 응답:', d);
+    // projects 또는 data 키 모두 처리
+    var rows = (d && (d.projects || d.data)) || [];
+    if(rows.length > 0 || (d && d.projects !== undefined)) {
+      projects = rows.map(function(p) {
         try { p.partners = p.partners ? JSON.parse(p.partners) : []; } catch(e) { p.partners = []; }
         try { p.mats = p.mats ? JSON.parse(p.mats) : []; } catch(e) { p.mats = []; }
+        // 숫자형 변환
+        if(p.areaS) p.areaS = parseFloat(p.areaS)||0;
+        if(p.areaT) p.areaT = parseFloat(p.areaT)||0;
+        if(p.dFee) p.dFee = parseFloat(p.dFee)||0;
+        if(p.dCost) p.dCost = parseFloat(p.dCost)||0;
         return p;
       });
       setSyncState('ok', '시트 연동 완료 · ' + projects.length + '개 프로젝트');
+      console.log('projects:', projects);
       render();
     } else {
+      console.log('데이터 없음 또는 오류:', d);
       setSyncState('err', '불러오기 실패 — 새로고침 해보세요');
     }
   });
@@ -490,6 +499,7 @@ function render() {
     var qMatch = !q || (p.name||'').toLowerCase().includes(q) || (p.loc||'').toLowerCase().includes(q) || (p.manager||'').toLowerCase().includes(q) || (p.use||'').toLowerCase().includes(q);
     return sMatch && mMatch && qMatch;
   });
+  console.log('render - projects:', projects.length, 'list:', list.length, 'statusFilter:', statusFilter);
 
   // 정렬
   var statusOrder = {'계획중':0,'인허가중':1,'공사중':2};
