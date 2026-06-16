@@ -106,10 +106,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .view-mode textarea {
   height:auto!important;min-height:0!important;overflow:hidden!important;
 }
+.view-mode .radio-lbl { pointer-events:none; }
+.view-mode .radio-lbl:not(.on) { opacity:0.35; }
 .view-mode .add-btn, .view-mode .bill-del, .view-mode .pcard-del { display:none!important; }
 .view-mode .ep-title-input { pointer-events:none; }
 .view-mode .contract-name-input { pointer-events:none; border-bottom-color:transparent!important; }
 .view-mode .owner-card-hdr button { display:none!important; }
+.view-mode .radio-lbl { pointer-events:none; }
+.view-mode .radio-lbl:not(.on) { opacity:0.35; }
 .save-btn{flex:1;padding:8px;border-radius:var(--r);border:none;background:var(--utaa);color:#fff;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s}
 .save-btn:hover{background:#4a8a12}
 .del-btn{padding:8px 14px;border-radius:var(--r);border:0.5px solid #e24b4a;background:transparent;color:#e24b4a;font-size:12px;cursor:pointer}
@@ -340,13 +344,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <!-- 계산서 메모 -->
         <div class="ms">
           <div class="sec-title">계산서 메모</div>
-          <div class="fld"><textarea id="cBillMemo" placeholder="현금영수증 발급번호, 세금계산서 담당자, 특이사항 등" style="min-height:80px"></textarea></div>
+          <div class="fld"><textarea spellcheck="false" id="cBillMemo" placeholder="현금영수증 발급번호, 세금계산서 담당자, 특이사항 등" style="min-height:80px"></textarea></div>
         </div>
 
         <!-- 건축주 메모 -->
         <div class="ms">
           <div class="sec-title">건축주 메모</div>
-          <div class="fld"><textarea id="cMemo" placeholder="요청사항, 미팅내용, 특이사항 등"></textarea></div>
+          <div class="fld"><textarea spellcheck="false" id="cMemo" placeholder="요청사항, 미팅내용, 특이사항 등"></textarea></div>
         </div>
       </div>
 
@@ -385,7 +389,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
         <div class="ms">
           <div class="sec-title">주요 일정 메모</div>
-          <div class="fld"><textarea id="dScheduleMemo" placeholder="착공희망: 2025.06&#10;입주희망: 2026.03&#10;특이사항: 명절 전 준공 필수 등" style="min-height:90px"></textarea></div>
+          <div class="fld"><textarea spellcheck="false" id="dScheduleMemo" placeholder="착공희망: 2025.06&#10;입주희망: 2026.03&#10;특이사항: 명절 전 준공 필수 등" style="min-height:90px"></textarea></div>
         </div>
       </div>
 
@@ -415,7 +419,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="tab-pane" id="tab5">
         <div class="ms">
           <div class="sec-title">내부 메모</div>
-          <div class="fld"><textarea id="fMemo" placeholder="공사 이슈, 클라이언트 특이사항, 참고사항 등" style="min-height:140px"></textarea></div>
+          <div class="fld"><textarea spellcheck="false" id="fMemo" placeholder="공사 이슈, 클라이언트 특이사항, 참고사항 등" style="min-height:140px"></textarea></div>
         </div>
       </div>
     </div>
@@ -904,8 +908,11 @@ function addOwnerCard(o) {
     +'<div class="fld" style="margin-bottom:0"><label>이메일</label><input id="oem'+n+'" type="email" value="'+(o.email||'')+'" placeholder="example@email.com"></div>'
     +'</div>'
     +'<div class="fr">'
-    +'<div class="fld" style="margin-bottom:0"><label>사업자번호 / 주민번호</label><input id="obn'+n+'" value="'+(o.bizNo||'')+'" placeholder="000-00-00000"></div>'
-    +'<div class="fld" style="margin-bottom:0"><label>계산서 발행 이메일</label><input id="obe'+n+'" type="email" value="'+(o.billEmail||'')+'" placeholder="tax@company.com"></div>'
+    +'<div class="fld" style="margin-bottom:0"><label>사업자번호 / 주민번호</label><input id="obn'+n+'" value="'+(o.bizNo||'')+'" placeholder="000-00-00000" spellcheck="false"></div>'
+    +'<div class="fld" style="margin-bottom:0"><label>사업자명 <span style="font-weight:400;color:var(--tx3)">(법인/사업자일 경우)</span></label><input id="obn2'+n+'" value="'+(o.bizName||'')+'" placeholder="㈜예시회사" spellcheck="false"></div>'
+    +'</div>'
+    +'<div class="fr" style="margin-top:6px">'
+    +'<div class="fld" style="margin-bottom:0"><label>계산서 발행 이메일</label><input id="obe'+n+'" type="email" value="'+(o.billEmail||'')+'" placeholder="tax@company.com" spellcheck="false"></div>'
     +'</div>';
   document.getElementById('ownerList').appendChild(div);
 }
@@ -925,7 +932,7 @@ function collectOwners(){
     if(!el.id.match(/^oc\d+$/)) return;
     var n=el.id.replace('oc','');
     var checked=el.querySelector('input[type=radio]:checked');
-    arr.push({name:document.getElementById('on'+n)?.value||'',type:checked?checked.value:'',phone:document.getElementById('oph'+n)?.value||'',email:document.getElementById('oem'+n)?.value||'',bizNo:document.getElementById('obn'+n)?.value||'',billEmail:document.getElementById('obe'+n)?.value||''});
+    arr.push({name:document.getElementById('on'+n)?.value||'',type:checked?checked.value:'',phone:document.getElementById('oph'+n)?.value||'',email:document.getElementById('oem'+n)?.value||'',bizNo:document.getElementById('obn'+n)?.value||'',bizName:document.getElementById('obn2'+n)?.value||'',billEmail:document.getElementById('obe'+n)?.value||''});
   });
   return arr;
 }
