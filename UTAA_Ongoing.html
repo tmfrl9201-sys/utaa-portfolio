@@ -498,7 +498,7 @@ function render() {
   var list = projects.filter(function(p) {
     var sMatch = statusFilter === 'all' || p.status === statusFilter;
     var mMatch = !manFilter || p.manager === manFilter;
-    var qMatch = !q || (p.name||'').toLowerCase().includes(q) || (p.addr||'').toLowerCase().includes(q) || (p.manager||'').toLowerCase().includes(q) || (p.use||'').toLowerCase().includes(q);
+    var qMatch = !q || (p.name||'').toLowerCase().includes(q) || (p.addr||'').toLowerCase().includes(q) || (p.manager||'').toLowerCase().includes(q) || (p.use||'').toLowerCase().includes(q) || (p.cName||'').toLowerCase().includes(q);
     return sMatch && mMatch && qMatch;
   });
   console.log('render - projects:', projects.length, 'list:', list.length, 'statusFilter:', statusFilter);
