@@ -96,7 +96,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ep-tab:hover{color:var(--tx)}
 .ep-tab.on{color:var(--utaa);border-bottom-color:var(--utaa)}
 .ep-tab.locked{opacity:.4;pointer-events:none}
-.ep-body{flex:1;overflow-y:auto;padding:14px 18px}
+.ep-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 18px}
 .ep-footer{padding:10px 18px;border-top:0.5px solid var(--br);display:flex;gap:8px;flex-shrink:0}
 .save-btn{flex:1;padding:8px;border-radius:var(--r);border:none;background:var(--utaa);color:#fff;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s}
 .save-btn:hover{background:#4a8a12}
@@ -117,7 +117,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ms{margin-bottom:16px}
 .calc-badge{font-size:11px;color:#3B6D11;background:#EAF3DE;border:0.5px solid var(--utaa);border-radius:20px;padding:2px 9px;display:inline-block;margin-top:5px}
 .radio-row{display:flex;gap:6px;flex-wrap:wrap}
-.radio-lbl{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:6px 12px;border-radius:var(--r);border:0.5px solid var(--br2);cursor:pointer;white-space:nowrap;transition:all .15s}
+.radio-lbl{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:6px 14px;border-radius:var(--r);border:0.5px solid var(--br2);cursor:pointer;white-space:nowrap;transition:all .15s}
 .radio-lbl:hover{border-color:var(--utaa2)}
 .radio-lbl.on{border-color:var(--utaa);color:var(--utaa);background:var(--utaa-bg)}
 .pcard{background:var(--bg2);border-radius:var(--r);padding:9px 11px;margin-bottom:7px;border:0.5px solid var(--br)}
@@ -140,6 +140,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .nas-copy{padding:5px 8px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg2);color:var(--tx2);cursor:pointer;font-size:11px;white-space:nowrap;transition:all .15s}
 .nas-copy:hover{border-color:var(--utaa);color:var(--utaa)}
 .locked-msg{padding:24px 0;text-align:center;font-size:12px;color:var(--tx3)}
+/* 계약 카드 */
+.contract-card{background:var(--bg2);border:0.5px solid var(--br);border-radius:var(--r);padding:10px 12px;margin-bottom:10px}
+.contract-card-hdr{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.contract-name-input{flex:1;font-size:12px;font-weight:600;color:var(--tx);border:none;background:transparent;outline:none;border-bottom:1px solid transparent;padding:0 2px;transition:border .15s}
+.contract-name-input:focus{border-bottom-color:var(--utaa)}
+.contract-table{width:100%;border-collapse:collapse;font-size:11px}
+.contract-table th{text-align:left;padding:3px 5px;font-weight:500;color:var(--tx2);font-size:10px;border-bottom:0.5px solid var(--br)}
+.contract-table td{padding:4px 4px;vertical-align:middle;border-bottom:0.5px solid var(--br2)}
+.contract-table tr:last-child td{border-bottom:none}
+.contract-table select{font-size:11px;padding:3px 5px;border-radius:5px;border:0.5px solid var(--br2);background:var(--bg);color:var(--tx);outline:none;width:100%}
+.contract-table input[type=text]{font-size:11px;padding:3px 6px;border-radius:5px;border:0.5px solid var(--br2);background:var(--bg);color:var(--tx);outline:none;width:100%;transition:border .15s}
+.contract-table input[type=text]:focus{border-color:var(--utaa)}
 </style>
 </head>
 <body>
@@ -290,34 +302,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
       <!-- 탭1: 건축주 -->
       <div class="tab-pane" id="tab1">
+
+        <!-- 건축주 목록 -->
         <div class="ms">
-          <div class="sec-title">건축주 정보</div>
-          <div class="fld"><label>구분</label>
-            <div class="radio-row">
-              <label class="radio-lbl" id="lblPersonal"><input type="radio" name="cType" value="개인" style="accent-color:var(--utaa)" onchange="syncRadioStyle('cType','lbl')"> 개인</label>
-              <label class="radio-lbl" id="lblCorp"><input type="radio" name="cType" value="법인" style="accent-color:var(--utaa)" onchange="syncRadioStyle('cType','lbl')"> 법인</label>
-            </div>
-          </div>
-          <div class="fr">
-            <div class="fld"><label>이름 / 법인명</label><input id="cName" placeholder="홍길동 / ㈜예시"></div>
-            <div class="fld"><label>연락처</label><input id="cPhone" placeholder="010-0000-0000"></div>
-          </div>
-          <div class="fld"><label>이메일</label><input id="cEmail" type="email" placeholder="example@email.com"></div>
+          <div class="sec-title">건축주</div>
+          <div id="ownerList"></div>
+          <button class="add-btn" onclick="addOwner()"><i class="ti ti-plus"></i> 건축주 추가</button>
         </div>
+
+        <!-- 계약 카드 목록 -->
         <div class="ms">
-          <div class="sec-title">계산서 정보</div>
-          <div class="fld"><label>발행 유형</label>
-            <div class="radio-row">
-              <label class="radio-lbl" id="lblCash" style="font-size:10px"><input type="radio" name="billType" value="현금영수증" style="accent-color:var(--utaa)" onchange="syncRadioStyle('billType','lblBill')"> 현금영수증</label>
-              <label class="radio-lbl" id="lblTax" style="font-size:10px"><input type="radio" name="billType" value="세금계산서" style="accent-color:var(--utaa)" onchange="syncRadioStyle('billType','lblBill')"> 세금계산서</label>
-              <label class="radio-lbl" id="lblEtc" style="font-size:10px"><input type="radio" name="billType" value="기타" style="accent-color:var(--utaa)" onchange="syncRadioStyle('billType','lblBill')"> 기타</label>
-            </div>
+          <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+            계약별 계산서 내역
+            <button class="add-btn" style="margin:0;width:auto;padding:3px 10px;border-style:solid" onclick="addContractCard({})"><i class="ti ti-plus"></i> 계약 추가</button>
           </div>
-          <div class="fr">
-            <div class="fld"><label>사업자번호 / 주민번호</label><input id="cBillNo" placeholder="000-00-00000"></div>
-            <div class="fld"><label>계산서 발행 이메일</label><input id="cBillEmail" type="email" placeholder="tax@company.com"></div>
-          </div>
+          <div id="contractList" style="margin-top:8px"></div>
         </div>
+
+        <!-- 계산서 메모 -->
+        <div class="ms">
+          <div class="sec-title">계산서 메모</div>
+          <div class="fld"><textarea id="cBillMemo" placeholder="현금영수증 발급번호, 세금계산서 담당자, 특이사항 등" style="min-height:80px"></textarea></div>
+        </div>
+
+        <!-- 건축주 메모 -->
         <div class="ms">
           <div class="sec-title">건축주 메모</div>
           <div class="fld"><textarea id="cMemo" placeholder="요청사항, 미팅내용, 특이사항 등"></textarea></div>
@@ -498,7 +506,7 @@ function render() {
   var list = projects.filter(function(p) {
     var sMatch = statusFilter === 'all' || p.status === statusFilter;
     var mMatch = !manFilter || p.manager === manFilter;
-    var qMatch = !q || (p.name||'').toLowerCase().includes(q) || (p.addr||'').toLowerCase().includes(q) || (p.manager||'').toLowerCase().includes(q) || (p.use||'').toLowerCase().includes(q) || (p.cName||'').toLowerCase().includes(q);
+    var qMatch = !q || (p.name||'').toLowerCase().includes(q) || (p.addr||'').toLowerCase().includes(q) || (p.manager||'').toLowerCase().includes(q) || (p.use||'').toLowerCase().includes(q) || (p.owners||'').toLowerCase().includes(q);
     return sMatch && mMatch && qMatch;
   });
   console.log('render - projects:', projects.length, 'list:', list.length, 'statusFilter:', statusFilter);
@@ -653,16 +661,12 @@ function loadForm(p) {
   document.getElementById('dCost').value = p.dCost||'';
   document.getElementById('dCostDate').value = p.dCostDate||'';
   document.getElementById('dScheduleMemo').value = p.dScheduleMemo||'';
-  document.getElementById('cName').value = p.cName||'';
-  document.getElementById('cPhone').value = p.cPhone||'';
-  document.getElementById('cEmail').value = p.cEmail||'';
-  document.getElementById('cBillNo').value = p.cBillNo||'';
-  document.getElementById('cBillEmail').value = p.cBillEmail||'';
   document.getElementById('cMemo').value = p.cMemo||'';
+  document.getElementById('cBillMemo').value = p.cBillMemo||'';
   document.getElementById('fMemo').value = p.memo||'';
-  document.querySelectorAll('input[name="cType"]').forEach(function(r){r.checked=r.value===(p.cType||'');});
-  document.querySelectorAll('input[name="billType"]').forEach(function(r){r.checked=r.value===(p.billType||'');});
-  syncAllRadio();
+  // 건축주 목록 & 계산서 내역
+  try { loadOwners(p.owners ? JSON.parse(p.owners) : (p.cName ? [{name:p.cName,type:p.cType||'',phone:p.cPhone||'',email:p.cEmail||'',bizNo:p.cBillNo||'',billEmail:p.cBillEmail||''}] : [])); } catch(e){ loadOwners([]); }
+  try { loadContracts(p.contracts ? JSON.parse(p.contracts) : (p.billRows ? [{name:'본계약', rows:JSON.parse(p.billRows)}] : null)); } catch(e){ loadContracts(null); }
   loadPartners(p.partners||[]);
   loadMats(p.mats||[]);
   updateEpSub();
@@ -674,14 +678,10 @@ function loadForm(p) {
 function clearForm() {
   ['epTitle','fManager','fManagerDirect','fManagerShort','fUse','fAddr','fAreaS','fAreaT','fFloor','fNas',
    'dFee','dContract','dPermitApply','dPermitDone','dStart','dExpected','dCost','dCostDate','dScheduleMemo',
-   'cName','cPhone','cEmail','cBillNo','cBillEmail','cMemo','fMemo'].forEach(function(id){
+   'cMemo','cBillMemo','fMemo'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
-  document.querySelectorAll('input[name="cType"],input[name="billType"]').forEach(function(r){r.checked=false;});
-  ['lblPersonal','lblCorp','lblCash','lblTax','lblEtc'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.classList.remove('on');
-  });
-  loadPartners([]); loadMats([]);
+  loadOwners([]); loadContracts(null); loadPartners([]); loadMats([]);
   ['dFeePerPy','dCostPerPy','dDesignPeriod','dPermitPeriod','dConstrPeriod'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display='none';
   });
@@ -712,13 +712,9 @@ function saveProject() {
     dCost:parseFloat(document.getElementById('dCost').value)||0,
     dCostDate:document.getElementById('dCostDate').value.trim(),
     dScheduleMemo:document.getElementById('dScheduleMemo').value,
-    cName:document.getElementById('cName').value.trim(),
-    cPhone:document.getElementById('cPhone').value.trim(),
-    cEmail:document.getElementById('cEmail').value.trim(),
-    cType:(document.querySelector('input[name="cType"]:checked')||{}).value||'',
-    billType:(document.querySelector('input[name="billType"]:checked')||{}).value||'',
-    cBillNo:document.getElementById('cBillNo').value.trim(),
-    cBillEmail:document.getElementById('cBillEmail').value.trim(),
+    owners:JSON.stringify(collectOwners()),
+    contracts:JSON.stringify(collectContracts()),
+    cBillMemo:document.getElementById('cBillMemo').value.trim(),
     cMemo:document.getElementById('cMemo').value.trim(),
     partners:collectPartners(),
     mats:collectMats(),
@@ -803,6 +799,143 @@ function updateEpSub() {
   var parts = [use, shortAddr].filter(Boolean);
   if(mgr) parts.push('담당: '+mgr);
   document.getElementById('epSub').textContent = parts.join(' · ');
+}
+
+// ── 건축주 ───────────────────────────────────────────────────────────
+var ownerCount = 0;
+function loadOwners(arr) {
+  document.getElementById('ownerList').innerHTML = '';
+  ownerCount = 0;
+  (arr||[]).forEach(function(o){ addOwnerCard(o); });
+  if(!arr||!arr.length) addOwnerCard({});
+}
+function addOwner(){ addOwnerCard({}); }
+function addOwnerCard(o) {
+  var n = ownerCount++;
+  var idx = n + 1;
+  var div = document.createElement('div');
+  div.className = 'owner-card'; div.id = 'oc'+n;
+  div.innerHTML =
+    '<div class="owner-card-hdr">'
+    +'<span class="owner-card-title">건축주 '+idx+'</span>'
+    +'<button class="bill-del" onclick="removeOwnerCard(\'oc'+n+'\')" title="삭제"><i class="ti ti-x" style="font-size:11px"></i></button>'
+    +'</div>'
+    +'<div class="fr" style="margin-bottom:6px">'
+    +'<div class="fld" style="margin-bottom:0"><label>이름 / 법인명</label><input id="on'+n+'" value="'+(o.name||'')+'" placeholder="홍길동 / ㈜예시"></div>'
+    +'<div class="fld" style="margin-bottom:0"><label>구분</label>'
+    +'<div class="radio-row" style="margin-top:6px">'
+    +'<label class="radio-lbl'+(o.type==='개인'?' on':'')+'"><input type="radio" name="otype'+n+'" value="개인" style="accent-color:var(--utaa)" onchange="syncOwnerType(this)"> 개인</label>'
+    +'<label class="radio-lbl'+(o.type==='법인'?' on':'')+'"><input type="radio" name="otype'+n+'" value="법인" style="accent-color:var(--utaa)" onchange="syncOwnerType(this)"> 법인</label>'
+    +'</div></div>'
+    +'</div>'
+    +'<div class="fr" style="margin-bottom:6px">'
+    +'<div class="fld" style="margin-bottom:0"><label>연락처</label><input id="oph'+n+'" value="'+(o.phone||'')+'" placeholder="010-0000-0000"></div>'
+    +'<div class="fld" style="margin-bottom:0"><label>이메일</label><input id="oem'+n+'" type="email" value="'+(o.email||'')+'" placeholder="example@email.com"></div>'
+    +'</div>'
+    +'<div class="fr">'
+    +'<div class="fld" style="margin-bottom:0"><label>사업자번호 / 주민번호</label><input id="obn'+n+'" value="'+(o.bizNo||'')+'" placeholder="000-00-00000"></div>'
+    +'<div class="fld" style="margin-bottom:0"><label>계산서 발행 이메일</label><input id="obe'+n+'" type="email" value="'+(o.billEmail||'')+'" placeholder="tax@company.com"></div>'
+    +'</div>';
+  document.getElementById('ownerList').appendChild(div);
+}
+function removeOwnerCard(id){ var el=document.getElementById(id); if(el) el.remove(); }
+function syncOwnerType(r){ r.closest('.radio-row').querySelectorAll('.radio-lbl').forEach(function(l){l.classList.toggle('on',l.querySelector('input')===r);}); }
+function collectOwners(){
+  var arr=[];
+  document.querySelectorAll('[id^="oc"]').forEach(function(el){
+    if(!el.id.match(/^oc\d+$/)) return;
+    var n=el.id.replace('oc','');
+    var checked=el.querySelector('input[type=radio]:checked');
+    arr.push({name:document.getElementById('on'+n)?.value||'',type:checked?checked.value:'',phone:document.getElementById('oph'+n)?.value||'',email:document.getElementById('oem'+n)?.value||'',bizNo:document.getElementById('obn'+n)?.value||'',billEmail:document.getElementById('obe'+n)?.value||''});
+  });
+  return arr;
+}
+
+// ── 계약 카드 ─────────────────────────────────────────────────────────
+var contractCount = 0;
+
+function loadContracts(arr) {
+  document.getElementById('contractList').innerHTML = '';
+  contractCount = 0;
+  if (arr && arr.length) {
+    arr.forEach(function(c) { addContractCard(c); });
+  } else {
+    addContractCard({ name: '본계약' });
+  }
+}
+
+function addContractCard(c) {
+  var cid = contractCount++;
+  var div = document.createElement('div');
+  div.className = 'contract-card';
+  div.id = 'cc' + cid;
+  div.innerHTML =
+    '<div class="contract-card-hdr">'
+    + '<input class="contract-name-input" value="' + (c.name || '본계약') + '" placeholder="계약명">'
+    + '<button class="bill-del" onclick="document.getElementById(\'cc' + cid + '\').remove()" title="카드 삭제"><i class="ti ti-trash" style="font-size:11px"></i></button>'
+    + '</div>'
+    + '<table class="contract-table"><colgroup><col style="width:62px"><col style="width:98px"><col style="width:86px"><col><col style="width:22px"></colgroup>'
+    + '<thead><tr><th>구분</th><th>발행유형</th><th>명의</th><th>비고</th><th></th></tr></thead>'
+    + '<tbody id="cb' + cid + '"></tbody></table>'
+    + '<button class="add-btn" style="margin-top:6px" onclick="addContractRow(' + cid + ')"><i class="ti ti-plus"></i> 중도금 추가</button>';
+  document.getElementById('contractList').appendChild(div);
+  var rows = (c.rows && c.rows.length)
+    ? c.rows
+    : [{ label: '계약금', fixed: true }, { label: '잔금', fixed: true }];
+  rows.forEach(function(r) { addContractRowData(cid, r); });
+}
+
+function addContractRow(cid) {
+  var tbody = document.getElementById('cb' + cid);
+  var mid = tbody.querySelectorAll('tr[data-mid]').length + 1;
+  var lastRow = null;
+  tbody.querySelectorAll('tr').forEach(function(r) {
+    if (r.dataset.label === '잔금') lastRow = r;
+  });
+  var row = makeContractRow({ label: '중도금' + mid, fixed: false }, mid);
+  if (lastRow) tbody.insertBefore(row, lastRow);
+  else tbody.appendChild(row);
+}
+
+function addContractRowData(cid, r) {
+  var mid = (r.label && r.label.startsWith('중도금')) ? parseInt(r.label.replace('중도금', '')) || 0 : 0;
+  document.getElementById('cb' + cid).appendChild(makeContractRow(r, mid));
+}
+
+function makeContractRow(r, mid) {
+  var tr = document.createElement('tr');
+  tr.dataset.label = r.label || '';
+  tr.dataset.fixed = r.fixed ? 'true' : 'false';
+  if (mid) tr.dataset.mid = mid;
+  var types = ['', '현금영수증', '세금계산서', '기타'];
+  var opts = types.map(function(t) {
+    return '<option value="' + t + '"' + (r.billType === t ? ' selected' : '') + '>' + (t || '—') + '</option>';
+  }).join('');
+  tr.innerHTML =
+    '<td style="font-size:11px;font-weight:500;color:var(--tx);padding:4px 5px;white-space:nowrap">' + (r.label || '') + '</td>'
+    + '<td><select>' + opts + '</select></td>'
+    + '<td><input type="text" value="' + (r.owner || '') + '" placeholder="홍길동"></td>'
+    + '<td><input type="text" value="' + (r.note || '') + '" placeholder="비고 (시점 등)"></td>'
+    + '<td>' + (r.fixed ? '' : '<button class="bill-del" onclick="this.closest(\'tr\').remove()"><i class="ti ti-x" style="font-size:10px"></i></button>') + '</td>';
+  return tr;
+}
+
+function collectContracts() {
+  var arr = [];
+  document.querySelectorAll('.contract-card').forEach(function(card) {
+    var rows = [];
+    card.querySelectorAll('tbody tr').forEach(function(tr) {
+      rows.push({
+        label: tr.dataset.label || '',
+        fixed: tr.dataset.fixed === 'true',
+        billType: tr.querySelector('select') ? tr.querySelector('select').value : '',
+        owner: tr.querySelectorAll('input[type=text]')[0]?.value || '',
+        note: tr.querySelectorAll('input[type=text]')[1]?.value || ''
+      });
+    });
+    arr.push({ name: card.querySelector('.contract-name-input').value.trim(), rows: rows });
+  });
+  return arr;
 }
 
 // ── 협력업체 ─────────────────────────────────────────────────────────
