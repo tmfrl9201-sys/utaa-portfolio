@@ -61,7 +61,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .cimg span{font-size:11px;color:var(--tx3)}
 .cyr{position:absolute;top:8px;left:8px;background:var(--utaa);color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
 .cbody{padding:11px 13px;flex:1;display:flex;flex-direction:column;gap:3px}
-.ctitle{font-size:14px;font-weight:500;color:var(--tx);cursor:pointer}
+.ctitle{font-size:14px;font-weight:500;color:var(--tx);cursor:pointer;white-space:pre-line;line-height:1.4}
 .cuse{font-size:11px;color:var(--tx2)}
 .cinfo{font-size:11px;color:var(--tx2);line-height:1.85;margin-top:2px}
 .cinfo span{display:block}
@@ -77,7 +77,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .lth img{width:100%;height:100%;object-fit:cover}
 .lth span{font-size:10px;color:var(--tx3)}
 .lyr{width:42px;flex-shrink:0;font-size:11px;color:var(--utaa);font-weight:500;padding:0 10px}
-.lnm{flex:1;font-size:13px;font-weight:500;color:var(--tx);padding:0 8px;cursor:pointer}
+.lnm{flex:1;font-size:13px;font-weight:500;color:var(--tx);padding:0 8px;cursor:pointer;white-space:pre-line;line-height:1.4}
 .luse{width:72px;font-size:11px;color:var(--tx2);flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lar{width:88px;font-size:11px;color:var(--tx2);flex-shrink:0}
 .lloc{width:115px;font-size:11px;color:var(--tx2);flex-shrink:0;padding-right:6px}
@@ -246,7 +246,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .pp .pp-hdr{display:flex;justify-content:flex-start;align-items:center;padding-bottom:10px;flex-shrink:0}
 .pp .pp-hdr img{height:13px;width:auto;object-fit:contain}
 .pp .pyr{font-size:11px;color:#A8C800;font-weight:600;margin-top:14px;margin-bottom:4px;flex-shrink:0}
-.pp .ptl{font-size:16px;font-weight:500;color:#111;letter-spacing:-0.01em;line-height:1.3;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.pp .ptl{font-size:16px;font-weight:500;color:#111;letter-spacing:-0.01em;line-height:1.3;margin-bottom:4px;white-space:pre-line;flex-shrink:0}
 .pp .paward{font-size:10px;font-weight:700;color:#111;margin-bottom:10px;line-height:1.4;flex-shrink:0}
 .pp .psp{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:10px;margin-bottom:8px;flex-shrink:0}
 .pp .sl{color:#888;white-space:nowrap}
@@ -401,7 +401,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
   <div style="flex:1;overflow-y:auto;padding:0 20px 20px;overscroll-behavior:contain">
   <!-- 기본정보 탭 -->
   <div id="fmTabBasic" class="fm-tab-pane on" style="padding-top:4px">
-  <div class="fld"><label>프로젝트명 *</label><input id="fName" placeholder="예) 논현동 N7338"></div>
+  <div class="fld"><label>프로젝트명 * <span style="font-weight:400;color:var(--tx2)">— 출력 줄바꿈은 직접 Enter로 입력</span></label><textarea id="fName" placeholder="예) 제주 맘편한산부인과&#10;+산후조리원" rows="2" style="resize:none;line-height:1.5;font-family:inherit;font-size:12px"></textarea></div>
   <div class="fr">
     <div class="fld"><label>완공연도 *</label><input id="fYr" type="number" min="1960" max="2060" placeholder="2024"></div>
     <div class="fld"><label>용도 *</label>
@@ -572,7 +572,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 <div class="modal" style="width:580px">
   <div class="df" id="dImg"></div>
   <div style="font-size:11px;color:#A8C800;font-weight:500;margin-bottom:4px" id="dYr"></div>
-  <h3 id="dName" style="font-size:20px;margin-bottom:4px"></h3>
+  <h3 id="dName" style="font-size:20px;margin-bottom:4px;white-space:pre-line;line-height:1.3"></h3>
   <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:12px" id="dAward"></div>
   <div class="dr" id="dRows"></div>
   <p class="dd" id="dDesc"></p>
@@ -769,7 +769,7 @@ function getFiltered() {
   var y = document.getElementById("fYear").value;
   var selMats = Array.from(document.querySelectorAll(".mat-chk:checked")).map(function(c){return c.value;});
   var list = projects.filter(function(p) {
-    if (q && p.name.toLowerCase().indexOf(q) < 0 && (p.loc || "").toLowerCase().indexOf(q) < 0) return false;
+    if (q && p.name.replace(/\n/g,' ').toLowerCase().indexOf(q) < 0 && (p.loc || "").toLowerCase().indexOf(q) < 0) return false;
     if (u && p.use !== u) return false;
     if (y && String(p.year) !== y) return false;
     if (areaFilterMax !== Infinity && (p.areaT < areaFilterMin || p.areaT > areaFilterMax)) return false;
@@ -836,6 +836,11 @@ function render() {
 
 function isSelected(id) { return selectedIds.indexOf(id) >= 0; }
 
+function nl2br(str) {
+  // white-space:pre-line 환경에선 \n 그대로 유지, HTML 특수문자만 이스케이프
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function cardHTML(p) {
   var sel = isSelected(p.id);
   var imgEl = p.img ? "<img src='" + p.img + "' alt='" + p.name + "'>" : "<span>이미지 없음</span>";
@@ -844,7 +849,7 @@ function cardHTML(p) {
   return "<div class='card" + (sel?" checked":"") + "' data-id='" + p.id + "'>" + checkEl +
     "<div class='cimg'>" + imgEl + "<span class='cyr'>" + p.year + "</span></div>" +
     "<div class='cbody'>" +
-    "<div class='ctitle'>" + p.name + "</div>" +
+    "<div class='ctitle'>" + nl2br(p.name) + "</div>" +
     "<div class='cuse'>" + p.use + "</div>" +
     "<div class='cinfo'>" +
     (p.areaT ? "<span>연면적 " + p.areaT.toLocaleString() + "㎡</span>" : "") +
@@ -864,7 +869,7 @@ function listHTML(p) {
   return "<div class='li" + (sel?" checked":"") + "' data-id='" + p.id + "'>" + checkEl +
     "<div class='lth'>" + imgEl + "</div>" +
     "<div class='lyr'>" + p.year + "</div>" +
-    "<div class='lnm'>" + p.name + "</div>" +
+    "<div class='lnm'>" + nl2br(p.name) + "</div>" +
     "<div class='luse'>" + p.use + "</div>" +
     "<div class='lar'>" + (p.areaT ? p.areaT.toLocaleString()+"㎡" : "-") + "</div>" +
     "<div class='lloc'>" + (p.loc||"-") + "</div>" +
@@ -1442,7 +1447,7 @@ function doPrint(s){
     html += "<div class='pp-left'>";
     html += "<div class='pp-hdr'><img src='"+logo+"' alt='UTAA'></div>";
     html += "<div class='pyr'>"+p.year+"</div>";
-    html += "<div class='ptl'>"+p.name+"</div>";
+    html += "<div class='ptl'>"+nl2br(p.name)+"</div>";
     if (p.award) html += "<div class='paward'>"+p.award+"</div>";
     html += "<div class='psp'>"+specs.map(function(s){
       var isTeam = s[0]==="설계팀";
