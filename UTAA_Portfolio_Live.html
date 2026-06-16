@@ -537,6 +537,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
         <textarea id="iMemo" placeholder="클라이언트 특이사항, 공사 이슈, 참고사항 등 자유롭게 입력" style="min-height:100px;resize:vertical;line-height:1.6"></textarea>
       </div>
     </div>
+
+    <!-- 계약/계산서 내역 (진행중에서 이전) -->
+    <div class="int-section" id="iContractSection" style="display:none">
+      <div class="int-section-title">🧾 계약별 계산서 내역 <span style="font-size:10px;font-weight:400;color:var(--tx3)">(진행중에서 이전)</span></div>
+      <div id="iContractList"></div>
+    </div>
+
+    <!-- 협력업체 (진행중에서 이전) -->
+    <div class="int-section" id="iPartnerSection" style="display:none">
+      <div class="int-section-title">🤝 협력업체 <span style="font-size:10px;font-weight:400;color:var(--tx3)">(진행중에서 이전)</span></div>
+      <div id="iPartnerList"></div>
+    </div>
+
   </div><!-- /fmTabInternal -->
 
   <!-- 건축주 탭 -->
@@ -3114,6 +3127,68 @@ function loadInternalFields(p) {
   document.getElementById('iMemo').value = p.intMemo || '';
   calcDesignFeePerPy(); calcConstrCostPerPy(); calcDesignPeriod(); calcPermitPeriod(); calcConstrPeriod();
   updateIntBadge();
+
+  // 계약별 계산서 내역 (진행중에서 이전)
+  var contractSection = document.getElementById('iContractSection');
+  var contractList = document.getElementById('iContractList');
+  contractList.innerHTML = '';
+  var contracts = [];
+  try { contracts = p.contracts ? JSON.parse(p.contracts) : []; } catch(e){}
+  if(contracts && contracts.length) {
+    contractSection.style.display = '';
+    contracts.forEach(function(c) {
+      var cardHtml = '<div style="background:var(--bg2);border:0.5px solid var(--br);border-radius:var(--r);padding:10px 12px;margin-bottom:8px">'
+        +'<div style="font-size:12px;font-weight:600;margin-bottom:8px">'+( c.name||'계약' )+'</div>'
+        +'<table style="width:100%;border-collapse:collapse;font-size:11px">'
+        +'<thead><tr style="border-bottom:0.5px solid var(--br)">'
+        +'<th style="text-align:left;padding:3px 6px;color:var(--tx2);font-weight:500">구분</th>'
+        +'<th style="text-align:left;padding:3px 6px;color:var(--tx2);font-weight:500">발행유형</th>'
+        +'<th style="text-align:left;padding:3px 6px;color:var(--tx2);font-weight:500">명의</th>'
+        +'<th style="text-align:left;padding:3px 6px;color:var(--tx2);font-weight:500">비고</th>'
+        +'</tr></thead><tbody>';
+      (c.rows||[]).forEach(function(r) {
+        cardHtml += '<tr style="border-bottom:0.5px solid var(--bg2)">'
+          +'<td style="padding:4px 6px;font-weight:500">'+(r.label||'')+'</td>'
+          +'<td style="padding:4px 6px">'+(r.billType||'—')+'</td>'
+          +'<td style="padding:4px 6px">'+(r.owner||'')+'</td>'
+          +'<td style="padding:4px 6px;color:var(--tx2)">'+(r.note||'')+'</td>'
+          +'</tr>';
+      });
+      cardHtml += '</tbody></table></div>';
+      contractList.innerHTML += cardHtml;
+    });
+  } else {
+    contractSection.style.display = 'none';
+  }
+
+  // 협력업체 (진행중에서 이전)
+  var partnerSection = document.getElementById('iPartnerSection');
+  var partnerList = document.getElementById('iPartnerList');
+  partnerList.innerHTML = '';
+  var partners = [];
+  try { partners = p.partners ? JSON.parse(p.partners) : []; } catch(e){}
+  if(partners && partners.length) {
+    partnerSection.style.display = '';
+    var ptHtml = '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      +'<thead><tr style="border-bottom:0.5px solid var(--br)">'
+      +'<th style="text-align:left;padding:3px 6px;color:var(--tx2);font-weight:500">역할</th>'
+      +'<th style="text-align:left;padding:3px 6px;color:var(--tx2);font-weight:500">업체명</th>'
+      +'<th style="text-align:left;padding:3px 6px;color:var(--tx2);font-weight:500">담당자</th>'
+      +'<th style="text-align:left;padding:3px 6px;color:var(--tx2);font-weight:500">연락처</th>'
+      +'</tr></thead><tbody>';
+    partners.forEach(function(pt) {
+      ptHtml += '<tr style="border-bottom:0.5px solid var(--bg2)">'
+        +'<td style="padding:4px 6px;color:var(--tx2)">'+(pt.role||'')+'</td>'
+        +'<td style="padding:4px 6px;font-weight:500">'+(pt.name||'')+'</td>'
+        +'<td style="padding:4px 6px">'+(pt.contact||'')+'</td>'
+        +'<td style="padding:4px 6px">'+(pt.phone||'')+'</td>'
+        +'</tr>';
+    });
+    ptHtml += '</tbody></table>';
+    partnerList.innerHTML = ptHtml;
+  } else {
+    partnerSection.style.display = 'none';
+  }
 }
 
 // 면적 변경 시 평당 단가 재계산
