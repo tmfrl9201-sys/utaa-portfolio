@@ -101,7 +101,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* 보기 모드: 입력 비활성화 스타일 */
 .view-mode input, .view-mode select, .view-mode textarea {
   pointer-events:none;background:transparent!important;border-color:transparent!important;
-  color:var(--tx)!important;resize:none;
+  color:var(--tx)!important;resize:none;overflow:hidden;
+}
+.view-mode textarea {
+  height:auto!important;min-height:0!important;overflow:hidden!important;
 }
 .view-mode .add-btn, .view-mode .bill-del, .view-mode .pcard-del { display:none!important; }
 .view-mode .ep-title-input { pointer-events:none; }
@@ -120,7 +123,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .fld label{font-size:10px;color:var(--tx2);display:block;margin-bottom:4px;font-weight:500}
 .fld input,.fld select,.fld textarea{width:100%;font-size:12px;padding:6px 9px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);color:var(--tx);outline:none;transition:border .15s}
 .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--utaa)}
-.fld textarea{min-height:80px;resize:vertical;line-height:1.6}
+.fld textarea{min-height:100px;resize:vertical;line-height:1.6}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sec-title{font-size:10px;font-weight:600;color:var(--tx2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:0.5px solid var(--br)}
 .ms{margin-bottom:16px}
@@ -627,6 +630,11 @@ function setEditMode(on) {
     btn.style.color = '#3B6D11';
     btn.style.borderColor = 'var(--utaa)';
     if (footer) footer.style.display = 'none';
+    // textarea 높이 내용에 맞게 자동 조절
+    ep.querySelectorAll('textarea').forEach(function(ta) {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
   }
 }
 
