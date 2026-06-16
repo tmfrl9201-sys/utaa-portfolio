@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>건축인허가 API 테스트</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#f5f5f5;color:#222;font-size:13px;padding:24px}
+h2{font-size:16px;font-weight:700;margin-bottom:16px}
+.card{background:#fff;border-radius:8px;border:1px solid #e0e0e0;padding:20px;margin-bottom:16px}
+label{font-size:11px;font-weight:600;color:#666;display:block;margin-bottom:4px}
+input,textarea{width:100%;font-size:12px;padding:7px 10px;border:1px solid #ddd;border-radius:6px;outline:none;margin-bottom:10px;font-family:inherit}
+input:focus,textarea:focus{border-color:#4caf50}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+button{padding:9px 20px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary{background:#4caf50;color:#fff}
+.btn-primary:hover{background:#388e3c}
+.btn-secondary{background:#eee;color:#444}
+pre{background:#1e1e1e;color:#d4d4d4;padding:16px;border-radius:6px;font-size:11px;overflow:auto;max-height:400px;white-space:pre-wrap;word-break:break-all}
+.tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;margin-right:4px;margin-bottom:4px}
+.tag-ok{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.tag-err{background:#ffebee;color:#c62828;border:1px solid #ef9a9a}
+.result-item{padding:10px 12px;border-radius:6px;border:1px solid #e0e0e0;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.result-item:hover{border-color:#4caf50;background:#f9fff9}
+.result-item h4{font-size:12px;font-weight:600;margin-bottom:4px}
+.result-item p{font-size:11px;color:#666;line-height:1.6}
+.field-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.field-row label{margin:0;min-width:100px}
+.field-row span{font-size:12px;color:#333;font-weight:500}
+.hint{font-size:10px;color:#999;margin-top:-6px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<h2>🔍 건축인허가 API 테스트</h2>
+
+<div class="card">
+  <label>인증키 (Encoding 버전)</label>
+  <input id="apiKey" placeholder="data.go.kr 인증키 붙여넣기" type="password">
+
+  <label>조회 방식</label>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button class="btn-secondary" style="flex:1" onclick="setMode('addr')">📍 주소로 조회</button>
+    <button class="btn-secondary" style="flex:1" onclick="setMode('name')">🏢 건물명으로 조회</button>
+  </div>
+
+  <div id="addrMode">
+    <div class="row3">
+      <div>
+        <label>시군구코드 <span style="font-weight:400;color:#999">(5자리)</span></label>
+        <input id="sigunguCd" placeholder="예: 11680 (강남구)">
+        <div class="hint">서울 종로=11110, 중구=11140, 강남=11680</div>
+      </div>
+      <div>
+        <label>법정동코드 <span style="font-weight:400;color:#999">(5자리)</span></label>
+        <input id="bjdongCd" placeholder="예: 10300 (논현동)">
+      </div>
+      <div>
+        <label>대지구분 <span style="font-weight:400;color:#999">0=대지 1=산</span></label>
+        <input id="platGbCd" placeholder="0" value="0">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>본번</label>
+        <input id="bun" placeholder="예: 0001">
+      </div>
+      <div>
+        <label>부번</label>
+        <input id="ji" placeholder="예: 0000">
+      </div>
+    </div>
+    <div class="hint" style="margin-top:-4px;margin-bottom:12px">💡 법정동코드는 <a href="https://www.code.go.kr/stdcode/regCodeL.do" target="_blank" style="color:#4caf50">행정표준코드</a>에서 확인</div>
+  </div>
+
+  <div id="nameMode" style="display:none">
+    <label>건물명 (일부만 입력해도 됨)</label>
+    <input id="bldNm" placeholder="예: 맘편한산부인과">
+    <div class="row">
+      <div>
+        <label>시도명</label>
+        <input id="siNm" placeholder="예: 제주특별자치도">
+      </div>
+      <div>
+        <label>시군구명</label>
+        <input id="sggNm" placeholder="예: 제주시">
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px">
+    <button class="btn-primary" onclick="fetchAPI()" style="flex:1">조회하기</button>
+    <button class="btn-secondary" onclick="clearResult()">초기화</button>
+  </div>
+</div>
+
+<div class="card" id="resultCard" style="display:none">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <h2 style="margin:0">조회 결과</h2>
+    <span id="resultCount" style="font-size:11px;color:#666"></span>
+  </div>
+  <div id="resultList"></div>
+</div>
+
+<div class="card" id="selectedCard" style="display:none">
+  <h2 style="margin-bottom:12px">✅ 선택된 항목 — 앱에 적용될 데이터</h2>
+  <div id="selectedFields"></div>
+  <button class="btn-primary" onclick="copyToClipboard()" style="margin-top:8px">📋 JSON 복사</button>
+</div>
+
+<div class="card">
+  <h2 style="margin-bottom:10px">🔧 원본 응답 (디버깅용)</h2>
+  <pre id="rawOutput">조회 결과가 여기 표시됩니다.</pre>
+</div>
+
+<script>
+var currentMode = 'addr';
+var rawData = null;
+
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('addrMode').style.display = m==='addr'?'':'none';
+  document.getElementById('nameMode').style.display = m==='name'?'':'none';
+}
+
+function fetchAPI() {
+  var key = document.getElementById('apiKey').value.trim();
+  if(!key){ alert('인증키를 입력해주세요'); return; }
+
+  var base = 'https://apis.data.go.kr/1613000/ArchPmsService_v2/getApbylcAsitStat';
+  var params = 'serviceKey='+encodeURIComponent(key)+'&numOfRows=10&pageNo=1&_type=json';
+
+  if(currentMode === 'addr') {
+    var sigungu = document.getElementById('sigunguCd').value.trim();
+    var bjdong  = document.getElementById('bjdongCd').value.trim();
+    var platGb  = document.getElementById('platGbCd').value.trim()||'0';
+    var bun     = document.getElementById('bun').value.trim();
+    var ji      = document.getElementById('ji').value.trim();
+    if(!sigungu||!bjdong){ alert('시군구코드와 법정동코드를 입력해주세요'); return; }
+    params += '&sigunguCd='+sigungu+'&bjdongCd='+bjdong+'&platGbCd='+platGb;
+    if(bun) params += '&bun='+bun.padStart(4,'0');
+    if(ji)  params += '&ji='+ji.padStart(4,'0');
+  } else {
+    var bldNm = document.getElementById('bldNm').value.trim();
+    var siNm  = document.getElementById('siNm').value.trim();
+    var sggNm = document.getElementById('sggNm').value.trim();
+    if(siNm)  params += '&siNm='+encodeURIComponent(siNm);
+    if(sggNm) params += '&sggNm='+encodeURIComponent(sggNm);
+    if(bldNm) params += '&bldNm='+encodeURIComponent(bldNm);
+  }
+
+  var url = base + '?' + params;
+  document.getElementById('rawOutput').textContent = '조회 중...';
+  document.getElementById('resultCard').style.display = 'none';
+
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      rawData = data;
+      document.getElementById('rawOutput').textContent = JSON.stringify(data, null, 2);
+      parseResult(data);
+    })
+    .catch(function(e){
+      document.getElementById('rawOutput').textContent = '오류: '+e.message+'\n\nURL: '+url;
+    });
+}
+
+function parseResult(data) {
+  var items = [];
+  try {
+    var body = data.response.body;
+    var total = body.totalCount;
+    if(total === 0 || !body.items || !body.items.item) {
+      document.getElementById('resultCard').style.display = '';
+      document.getElementById('resultCount').textContent = '결과 없음';
+      document.getElementById('resultList').innerHTML = '<p style="color:#999;font-size:12px;padding:12px 0">조회 결과가 없습니다. 주소 코드를 확인해주세요.</p>';
+      return;
+    }
+    items = Array.isArray(body.items.item) ? body.items.item : [body.items.item];
+    document.getElementById('resultCount').textContent = '총 '+total+'건 (최대 10건 표시)';
+  } catch(e) {
+    document.getElementById('resultList').innerHTML = '<p style="color:#c00;font-size:12px">응답 파싱 오류: '+e.message+'</p>';
+    document.getElementById('resultCard').style.display = '';
+    return;
+  }
+
+  var html = items.map(function(item, i) {
+    var permitDate = item.pmsDay || '-';
+    var applyDate  = item.rcvDay || '-';
+    var addr = (item.platPlc||item.newPlatPlc||'-');
+    var owner = item.archGbCdNm||'';
+    return '<div class="result-item" onclick="selectItem('+i+')">'
+      +'<h4>'+(item.bldNm||'(건물명 없음)')+' <span style="font-size:10px;color:#999;font-weight:400">'+addr+'</span></h4>'
+      +'<p>'
+      +'허가접수: <b>'+applyDate+'</b> &nbsp;|&nbsp; '
+      +'허가완료: <b>'+permitDate+'</b> &nbsp;|&nbsp; '
+      +'용도: '+(item.mainPurpsCdNm||'-')+' &nbsp;|&nbsp; '
+      +'건축주: '+(item.ownerNm||'-')
+      +'</p>'
+      +'</div>';
+  }).join('');
+
+  document.getElementById('resultList').innerHTML = html;
+  document.getElementById('resultCard').style.display = '';
+  window._items = items;
+}
+
+function selectItem(i) {
+  var item = window._items[i];
+  var mapped = {
+    dPermitApply: item.rcvDay||'',       // 허가접수일
+    dPermitDone:  item.pmsDay||'',       // 허가완료일
+    fAreaT: item.totArea||'',            // 연면적
+    fAreaS: item.platArea||'',           // 대지면적
+    fFloor: (item.grndFlrCnt?'지상'+item.grndFlrCnt+'층':'') + (item.ugrndFlrCnt&&item.ugrndFlrCnt>0?' 지하'+item.ugrndFlrCnt+'층':''),
+    fUse:   item.mainPurpsCdNm||'',
+    ownerName: item.ownerNm||''
+  };
+
+  var labels = {
+    dPermitApply:'허가접수일', dPermitDone:'허가완료일',
+    fAreaT:'연면적(㎡)', fAreaS:'대지면적(㎡)',
+    fFloor:'층수', fUse:'주용도', ownerName:'건축주명'
+  };
+
+  var html = Object.keys(mapped).map(function(k){
+    return '<div class="field-row"><label>'+labels[k]+'</label><span>'+(mapped[k]||'<span style="color:#bbb">없음</span>')+'</span></div>';
+  }).join('');
+
+  document.getElementById('selectedFields').innerHTML = html;
+  document.getElementById('selectedCard').style.display = '';
+  window._selected = mapped;
+
+  document.getElementById('selectedCard').scrollIntoView({behavior:'smooth'});
+}
+
+function copyToClipboard() {
+  navigator.clipboard.writeText(JSON.stringify(window._selected, null, 2));
+  alert('JSON 복사됨!');
+}
+
+function clearResult() {
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('selectedCard').style.display = 'none';
+  document.getElementById('rawOutput').textContent = '조회 결과가 여기 표시됩니다.';
+  rawData = null;
+}
+</script>
+</body>
+</html>
