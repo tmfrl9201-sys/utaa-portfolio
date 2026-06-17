@@ -257,7 +257,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
       <div class="ep-actions">
-        <button class="complete-btn" id="completeBtn" onclick="moveToPortfolio()"><i class="ti ti-building"></i> 준공완료</button>
         <button id="editModeBtn" onclick="toggleEditMode()" style="padding:5px 12px;border-radius:var(--r);border:0.5px solid var(--utaa);background:var(--utaa-bg);color:#3B6D11;font-size:11px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap"><i class="ti ti-pencil" style="font-size:11px"></i> 편집</button>
         <div class="close-btn" onclick="closePanel()"><i class="ti ti-x" style="font-size:13px"></i></div>
       </div>
@@ -665,6 +664,9 @@ function setEditMode(on) {
     if (footer) footer.style.display = 'flex';
     if (seumterBtn) seumterBtn.style.display = 'flex';
     if (seumterInfoView) seumterInfoView.style.display = 'none';
+    // 편집모드: 준공완료 버튼 숨김
+    var completeBtnBottom = document.getElementById('completeBtnBottom');
+    if(completeBtnBottom) completeBtnBottom.style.display = 'none';
   } else {
     ep.classList.add('view-mode');
     btn.innerHTML = '<i class="ti ti-pencil" style="font-size:11px"></i> 편집';
@@ -673,6 +675,9 @@ function setEditMode(on) {
     btn.style.borderColor = 'var(--utaa)';
     if (footer) footer.style.display = 'none';
     if (seumterBtn) seumterBtn.style.display = 'none';
+    // 보기모드: 준공완료 버튼 표시
+    var completeBtnBottom = document.getElementById('completeBtnBottom');
+    if(completeBtnBottom) completeBtnBottom.style.display = '';
     // 세움터 연동 정보 표시
     updateSeumterInfoView();
     // textarea 높이 내용에 맞게 자동 조절
@@ -713,7 +718,6 @@ function openNew() {
   document.getElementById('epBadge').textContent = '계획중';
   document.getElementById('fStatus').value = '계획중';
   document.getElementById('delBtn').style.display = 'none';
-  document.getElementById('completeBtn').style.display = 'none';
   document.getElementById('completeBtnBottom').style.display = 'none';
   onStatusChange();
   splitOpen();
@@ -731,8 +735,7 @@ function openEdit(id) {
   document.getElementById('delBtn').style.display = '';
   var isConstr = p.status==='공사중';
   var isPermitOrConstr = p.status==='인허가중'||p.status==='공사중'||p.status==='홀드';
-  document.getElementById('completeBtn').style.display = isConstr?'':'none';
-  document.getElementById('completeBtnBottom').style.display = '';
+  document.getElementById('completeBtnBottom').style.display = isConstr?'':'none';
   onStatusChange();
   splitOpen();
   setEditMode(false); // 기존 프로젝트는 보기모드로 시작
@@ -894,7 +897,8 @@ function onStatusChange() {
   bdg.textContent = v;
   var isConstr = v==='공사중';
   var isPermitOrConstr = v==='인허가중'||v==='공사중'||v==='홀드';
-  document.getElementById('completeBtn').style.display = editId&&isConstr?'':'none';
+  var cb = document.getElementById('completeBtnBottom');
+  if(cb) cb.style.display = (!isEditMode && editId && isConstr) ? '' : 'none';
   var pt = document.getElementById('partnerTab');
   var pl = document.getElementById('partnerLocked');
   var plist = document.getElementById('partnerList');
