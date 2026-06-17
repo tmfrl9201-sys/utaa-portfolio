@@ -1303,59 +1303,51 @@ function doSeumterSearch() {
   document.getElementById('stSearchBtn').textContent = '조회 중...';
   document.getElementById('stResults').innerHTML = '';
 
-  var params = {
-    action: 'searchPermit',
-    sigunguCd: parsed.sigunguCd,
-    bjdongCd: parsed.bjdongCd,
-    bun: parsed.bun,
-    ji: parsed.ji
-  };
-  var qs = Object.keys(params).map(function(k){ return k+'='+encodeURIComponent(params[k]); }).join('&');
-  var url = API + '?' + qs + '&callback=stCb';
+  var API_KEY = '72431c2bcf460c1a68ecb74df38d3204e3bcb01a4ddd87210172846f921305fe';
+  var url = 'https://apis.data.go.kr/1613000/ArchPmsHubService/getApBasisOulnInfo'
+    + '?serviceKey=' + API_KEY
+    + '&numOfRows=10&pageNo=1&_type=json'
+    + '&sigunguCd=' + parsed.sigunguCd
+    + '&bjdongCd=' + parsed.bjdongCd
+    + '&bun=' + parsed.bun
+    + '&ji=' + parsed.ji;
 
-  window.stCb = function(d) {
-    document.getElementById('stSearchBtn').textContent = '조회';
-    if(!d || !d.ok) {
-      document.getElementById('stMsg').textContent = '❌ 오류: ' + (d&&d.error||'응답 없음');
-      return;
-    }
-    try {
-      var body = d.data.response.body;
-      var total = parseInt(body.totalCount)||0;
-      document.getElementById('stMsg').textContent = '총 ' + total + '건 조회됨';
-      if(total === 0 || !body.items || !body.items.item) {
-        document.getElementById('stResults').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--tx3)">결과가 없습니다.<br>주소를 다시 확인해주세요.</div>';
-        return;
+  fetch(url)
+    .then(function(res){ return res.json(); })
+    .then(function(data) {
+      document.getElementById('stSearchBtn').textContent = '조회';
+      try {
+        var body = data.response.body;
+        var total = parseInt(body.totalCount)||0;
+        document.getElementById('stMsg').textContent = '총 ' + total + '건 조회됨';
+        if(total === 0 || !body.items || !body.items.item) {
+          document.getElementById('stResults').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--tx3)">결과가 없습니다.<br>주소를 다시 확인해주세요.</div>';
+          return;
+        }
+        var items = Array.isArray(body.items.item) ? body.items.item : [body.items.item];
+        var html = items.map(function(item, i) {
+          var ug = parseInt(item.ugrndFlrCnt)||0, gr = parseInt(item.grndFlrCnt)||0;
+          var floor = (ug>0?'지하'+ug+'층 ':'')+(gr>0?'지상'+gr+'층':'');
+          return '<div onclick="applySeumterItem('+i+')" style="padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--br);margin-bottom:7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--utaa)\';this.style.background=\'var(--utaa-bg)\'" onmouseout="this.style.borderColor=\'var(--br)\';this.style.background=\'\'">'
+            +'<div style="font-size:12px;font-weight:500;margin-bottom:4px">'+(item.bldNm||'(건물명 없음)')+'<span style="font-size:10px;font-weight:400;color:var(--tx3);margin-left:6px">'+(item.platPlc||'')+'</span></div>'
+            +'<div style="font-size:11px;color:var(--tx2);line-height:1.8">'
+            +'허가접수: <b>'+(item.rcvDay||'—')+'</b> &nbsp;허가완료: <b>'+(item.pmsDay||item.archPmsDay||'—')+'</b><br>'
+            +'용도: '+(item.mainPurpsCdNm||'—')+' &nbsp;|&nbsp; 층수: '+(floor||'—')+'<br>'
+            +'대지: '+(item.platArea||'—')+'㎡ &nbsp;연면적: '+(item.totArea||'—')+'㎡'
+            +'</div>'
+            +'<div style="margin-top:6px;font-size:10px;color:var(--utaa);font-weight:500">클릭하면 이 항목으로 필드 자동입력 →</div>'
+            +'</div>';
+        }).join('');
+        document.getElementById('stResults').innerHTML = html;
+        window._stItems = items;
+      } catch(e) {
+        document.getElementById('stMsg').textContent = '❌ 파싱 오류: ' + e.message;
       }
-      var items = Array.isArray(body.items.item) ? body.items.item : [body.items.item];
-      var html = items.map(function(item, i) {
-        var ug = parseInt(item.ugrndFlrCnt)||0, gr = parseInt(item.grndFlrCnt)||0;
-        var floor = (ug>0?'지하'+ug+'층 ':'')+(gr>0?'지상'+gr+'층':'');
-        return '<div onclick="applySeumterItem('+i+')" style="padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--br);margin-bottom:7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--utaa)\';this.style.background=\'var(--utaa-bg)\'" onmouseout="this.style.borderColor=\'var(--br)\';this.style.background=\'\'">'
-          +'<div style="font-size:12px;font-weight:500;margin-bottom:4px">'+(item.bldNm||'(건물명 없음)')+'<span style="font-size:10px;font-weight:400;color:var(--tx3);margin-left:6px">'+(item.platPlc||'')+'</span></div>'
-          +'<div style="font-size:11px;color:var(--tx2);line-height:1.8">'
-          +'허가접수: <b>'+(item.rcvDay||'—')+'</b> &nbsp;허가완료: <b>'+(item.pmsDay||item.archPmsDay||'—')+'</b><br>'
-          +'용도: '+(item.mainPurpsCdNm||'—')+' &nbsp;|&nbsp; 층수: '+(floor||'—')+'<br>'
-          +'대지: '+(item.platArea||'—')+'㎡ &nbsp;연면적: '+(item.totArea||'—')+'㎡'
-          +'</div>'
-          +'<div style="margin-top:6px;font-size:10px;color:var(--utaa);font-weight:500">클릭하면 이 항목으로 필드 자동입력 →</div>'
-          +'</div>';
-      }).join('');
-      document.getElementById('stResults').innerHTML = html;
-      window._stItems = items;
-    } catch(e) {
-      document.getElementById('stMsg').textContent = '❌ 파싱 오류: ' + e.message;
-    }
-  };
-
-  var s = document.createElement('script');
-  s.src = url;
-  s.onerror = function(){
-    document.getElementById('stSearchBtn').textContent = '조회';
-    document.getElementById('stMsg').textContent = '❌ 스크립트 로드 실패';
-  };
-  document.body.appendChild(s);
-  setTimeout(function(){ if(document.body.contains(s)) document.body.removeChild(s); }, 8000);
+    })
+    .catch(function(err) {
+      document.getElementById('stSearchBtn').textContent = '조회';
+      document.getElementById('stMsg').textContent = '❌ 오류: ' + err.message;
+    });
 }
 
 function applySeumterItem(i) {
