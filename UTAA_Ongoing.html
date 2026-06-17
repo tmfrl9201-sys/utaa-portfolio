@@ -448,9 +448,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div onclick="closeSeumterModal()" style="width:24px;height:24px;border-radius:50%;border:0.5px solid var(--br2);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="ti ti-x" style="font-size:12px;color:var(--tx2)"></i></div>
     </div>
     <div style="padding:12px 18px;border-bottom:0.5px solid var(--br);flex-shrink:0">
-      <div style="font-size:10px;color:var(--tx2);margin-bottom:6px;font-weight:500">지번 주소 <span style="font-weight:400;color:var(--tx3)">(예: 서울특별시 강남구 자곡동 424-9)</span></div>
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:6px;font-weight:500">지번 주소 <span style="font-weight:400;color:var(--tx3)">(예: 경기 양주시 광사동 667 / 강남구 자곡동 424-9)</span></div>
       <div style="display:flex;gap:6px">
-        <input id="stAddr" placeholder="주소를 입력하세요..." style="flex:1;font-size:12px;padding:7px 10px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);color:var(--tx);outline:none;transition:border .15s" onfocus="this.style.borderColor='var(--utaa)'" onblur="this.style.borderColor='var(--br2)'" onkeydown="if(event.key==='Enter')doSeumterSearch()">
+        <input id="stAddr" placeholder="주소를 자유롭게 입력하세요..." style="flex:1;font-size:12px;padding:7px 10px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg);color:var(--tx);outline:none;transition:border .15s" onfocus="this.style.borderColor='var(--utaa)'" onblur="this.style.borderColor='var(--br2)'" onkeydown="if(event.key==='Enter')doSeumterSearch()">
         <button onclick="doSeumterSearch()" id="stSearchBtn" style="padding:7px 16px;border-radius:var(--r);border:none;background:var(--utaa);color:#fff;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .15s" onmouseover="this.style.background='#4a8a12'" onmouseout="this.style.background='var(--utaa)'">조회</button>
       </div>
       <div id="stMsg" style="font-size:11px;color:var(--tx3);margin-top:6px;min-height:16px"></div>
@@ -1273,32 +1273,37 @@ document.getElementById('seumterModal').addEventListener('click', function(e){
   if(e.target === this) closeSeumterModal();
 });
 
-function parseAddr(addr) {
-  // "서울특별시 강남구 자곡동 424-9" 파싱
+function parseAddrForText(addr) {
+  // "경기 양주시 광사동 667" 또는 "서울특별시 강남구 자곡동 424-9" 등 자유 형식 파싱
   addr = addr.trim();
-  var m = addr.match(/(\S+구|\S+시)\s+(\S+동|\S+가|\S+로)\s+([\d]+)(?:[-‐‑−–—](\d+))?/);
-  if(!m) return null;
-  var gu = m[1], dong = m[2], bun = m[3], ji = m[4]||'0';
-  var sigunguCd = SIGUNGU_MAP[gu];
-  var bjdongKey = gu + ' ' + dong;
-  var bjdongCd = BJDONG_MAP[bjdongKey];
-  if(!sigunguCd || !bjdongCd) return null;
-  return {
-    sigunguCd: sigunguCd,
-    bjdongCd: bjdongCd,
-    bun: bun.padStart(4,'0'),
-    ji: ji.padStart(4,'0')
-  };
+  // 시/도 추출
+  var siNm = '';
+  var sidoMap = {'서울':'서울특별시','부산':'부산광역시','대구':'대구광역시','인천':'인천광역시','광주':'광주광역시','대전':'대전광역시','울산':'울산광역시','세종':'세종특별자치시','경기':'경기도','강원':'강원도','충북':'충청북도','충남':'충청남도','전북':'전북특별자치도','전남':'전라남도','경북':'경상북도','경남':'경상남도','제주':'제주특별자치도'};
+  for(var k in sidoMap) {
+    if(addr.indexOf(k) === 0 || addr.indexOf(sidoMap[k]) === 0) {
+      siNm = sidoMap[k];
+      break;
+    }
+  }
+  // 시군구 추출
+  var sggNm = '';
+  var m = addr.match(/(\S+시|\S+군|\S+구)(?:\s|$)/);
+  if(m) sggNm = m[1];
+  // 나머지를 bldNm으로
+  var bldNm = addr.replace(/^(서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)\s*/,'').trim();
+  return { siNm: siNm, sggNm: sggNm, bldNm: bldNm };
 }
 
 function doSeumterSearch() {
   var addr = document.getElementById('stAddr').value.trim();
   if(!addr){ document.getElementById('stMsg').textContent = '주소를 입력해주세요'; return; }
-  var parsed = parseAddr(addr);
-  if(!parsed) {
-    document.getElementById('stMsg').textContent = '⚠️ 주소 파싱 실패 — "서울특별시 강남구 자곡동 424-9" 형식으로 입력해주세요';
+
+  var parsed = parseAddrForText(addr);
+  if(!parsed.bldNm) {
+    document.getElementById('stMsg').textContent = '⚠️ 주소를 다시 확인해주세요';
     return;
   }
+
   document.getElementById('stMsg').textContent = '조회 중...';
   document.getElementById('stSearchBtn').textContent = '조회 중...';
   document.getElementById('stResults').innerHTML = '';
@@ -1307,10 +1312,9 @@ function doSeumterSearch() {
   var url = 'https://apis.data.go.kr/1613000/ArchPmsHubService/getApBasisOulnInfo'
     + '?serviceKey=' + API_KEY
     + '&numOfRows=10&pageNo=1&_type=json'
-    + '&sigunguCd=' + parsed.sigunguCd
-    + '&bjdongCd=' + parsed.bjdongCd
-    + '&bun=' + parsed.bun
-    + '&ji=' + parsed.ji;
+    + '&bldNm=' + encodeURIComponent(parsed.bldNm);
+  if(parsed.siNm)  url += '&siNm='  + encodeURIComponent(parsed.siNm);
+  if(parsed.sggNm) url += '&sggNm=' + encodeURIComponent(parsed.sggNm);
 
   fetch(url)
     .then(function(res){ return res.json(); })
