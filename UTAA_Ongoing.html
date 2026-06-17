@@ -845,6 +845,7 @@ function saveProject() {
       if(idx>-1) projects[idx]=data; else projects.push(data);
       setSyncState('ok', '저장 완료');
       setEditMode(false);
+      renderTimeline();
       document.getElementById('delBtn').style.display='';
       render();
     } else {
@@ -1544,19 +1545,30 @@ function showNoResult() {
 function applySeumterItem(i) {
   var item = window._stItems[i];
   if(!item) return;
-  if(item.rcvDay && item.rcvDay.length===8) {
-    var d = item.rcvDay;
-    document.getElementById('dPermitApply').value = d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8);
+
+  function setDateField(id, val) {
+    if(val && val.length===8) {
+      document.getElementById(id).value = val.slice(0,4)+'-'+val.slice(4,6)+'-'+val.slice(6,8);
+    }
   }
-  var pmsDay = item.pmsDay || item.archPmsDay;
-  if(pmsDay && pmsDay.length===8) {
-    document.getElementById('dPermitDone').value = pmsDay.slice(0,4)+'-'+pmsDay.slice(4,6)+'-'+pmsDay.slice(6,8);
-  }
+
+  // 허가접수일
+  setDateField('dPermitApply', item.rcvDay);
+  // 허가완료일
+  setDateField('dPermitDone', item.pmsDay || item.archPmsDay);
+  // 착공일
+  setDateField('dStart', item.realStcnsDay || item.stcnsSchedDay);
+  // 사용승인일(준공) → 준공예정일로
+  setDateField('dExpected', item.useAprDay);
+
+  // 면적
   if(item.platArea) document.getElementById('fAreaS').value = item.platArea;
   if(item.totArea)  document.getElementById('fAreaT').value = item.totArea;
+  // 층수
   var ug = parseInt(item.ugrndFlrCnt)||0, gr = parseInt(item.grndFlrCnt)||0;
   if(ug||gr) document.getElementById('fFloor').value = (ug>0?'지하'+ug+'층 ':'')+( gr>0?'지상'+gr+'층':'');
-  calcAllPerPy(); calcDesignPeriod(); calcPermitPeriod(); renderTimeline();
+
+  calcAllPerPy(); calcDesignPeriod(); calcPermitPeriod(); calcConstrPeriod(); renderTimeline();
   closeSeumterModal();
   // 자동 저장
   saveProject();
