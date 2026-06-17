@@ -1214,6 +1214,9 @@ style.textContent = '.sync-dot.loading{background:#F0C040;animation:pulse .8s in
 document.head.appendChild(style);
 
 // ── 세움터 조회 ────────────────────────────────────────────────────
+var PERMIT_API_KEY = '72431c2bcf460c1a68ecb74df38d3204e3bcb01a4ddd87210172846f921305fe';
+var PERMIT_BASE = 'https://apis.data.go.kr/1613000/ArchPmsHubService/getApBasisOulnInfo';
+
 // 서울 시군구코드 맵
 var SIGUNGU_MAP = {
   '종로구':'11110','중구':'11140','용산구':'11170','성동구':'11200','광진구':'11215',
@@ -1237,29 +1240,12 @@ var BJDONG_MAP = {
   '송파구 장지동':'11300','송파구 풍납동':'11400',
   '강동구 강일동':'10100','강동구 고덕동':'10200','강동구 길동':'10300','강동구 둔촌동':'10400',
   '강동구 명일동':'10500','강동구 상일동':'10600','강동구 성내동':'10700','강동구 암사동':'10800',
-  '강동구 천호동':'10900','강동구 하일동':'11000',
-  '종로구 가회동':'10100','종로구 견지동':'10200','종로구 계동':'10300','종로구 공평동':'10400',
-  '종로구 관수동':'10500','종로구 관철동':'10600','종로구 관훈동':'10700','종로구 교남동':'10800',
-  '종로구 교북동':'10900','종로구 궁정동':'10300','종로구 낙원동':'11100','종로구 내수동':'11200',
-  '종로구 누하동':'11300','종로구 누상동':'11400','종로구 당주동':'11500','종로구 도렴동':'11600',
-  '종로구 돈의동':'11700','종로구 동숭동':'11800','종로구 명륜1가':'11900','종로구 명륜2가':'12000',
-  '종로구 명륜3가':'12100','종로구 명륜4가':'12200','종로구 무악동':'12300','종로구 묘동':'12400',
-  '종로구 봉익동':'12500','종로구 사간동':'12600','종로구 사직동':'12700','종로구 삼청동':'12800',
-  '종로구 서린동':'12900','종로구 세종로':'13000','종로구 소격동':'13100','종로구 송월동':'13200',
-  '종로구 송현동':'13300','종로구 수송동':'13400','종로구 숭인동':'13500','종로구 신교동':'10200',
-  '종로구 안국동':'13600','종로구 연건동':'13700','종로구 연지동':'13800','종로구 예지동':'13900',
-  '종로구 옥인동':'14000','종로구 와룡동':'14100','종로구 원남동':'14200','종로구 원서동':'14300',
-  '종로구 이화동':'14400','종로구 인사동':'14500','종로구 인의동':'14600','종로구 익선동':'14700',
-  '종로구 적선동':'10700','종로구 창성동':'10500','종로구 청운동':'10100','종로구 청진동':'14800',
-  '종로구 체부동':'14900','종로구 통의동':'10600','종로구 통인동':'10800','종로구 팔판동':'15000',
-  '종로구 평동':'15100','종로구 평창동':'15200','종로구 필운동':'15300','종로구 홍지동':'15400',
-  '종로구 홍파동':'15500','종로구 효자동':'10400','종로구 혜화동':'15600','종로구 훈정동':'15700'
+  '강동구 천호동':'10900','강동구 하일동':'11000'
 };
 
 function openSeumterModal() {
   var modal = document.getElementById('seumterModal');
   modal.style.display = 'flex';
-  // 현재 주소 필드 값 자동 입력
   var addr = document.getElementById('fAddr').value.trim();
   if(addr) document.getElementById('stAddr').value = addr;
   document.getElementById('stResults').innerHTML = '';
@@ -1273,121 +1259,185 @@ document.getElementById('seumterModal').addEventListener('click', function(e){
   if(e.target === this) closeSeumterModal();
 });
 
-function parseAddrForText(addr) {
-  // "경기 양주시 광사동 667" 또는 "서울특별시 강남구 자곡동 424-9" 등 자유 형식 파싱
+// 주소 파싱 — 서울이면 코드 방식, 서울 외면 텍스트 방식
+function parseAddrSmart(addr) {
   addr = addr.trim();
-  // 시/도 추출
-  var siNm = '';
+  // 서울 여부 판별
+  var isSeoul = addr.indexOf('서울') === 0;
+  // 구 추출
+  var guMatch = addr.match(/([가-힣]+구)/);
+  var gu = guMatch ? guMatch[1] : '';
+  // 동 추출
+  var dongMatch = addr.match(/([가-힣0-9]+(?:동|가|리))/);
+  var dong = dongMatch ? dongMatch[1] : '';
+  // 번지 추출
+  var bunMatch = addr.match(/([가-힣]+(?:동|가|리))\s*([0-9]+)(?:[-]([0-9]+))?/);
+  var bun = bunMatch ? bunMatch[2] : '';
+  var ji  = bunMatch ? (bunMatch[3]||'0') : '0';
+  // 시도 추출
   var sidoMap = {'서울':'서울특별시','부산':'부산광역시','대구':'대구광역시','인천':'인천광역시','광주':'광주광역시','대전':'대전광역시','울산':'울산광역시','세종':'세종특별자치시','경기':'경기도','강원':'강원도','충북':'충청북도','충남':'충청남도','전북':'전북특별자치도','전남':'전라남도','경북':'경상북도','경남':'경상남도','제주':'제주특별자치도'};
+  var siNm = '';
   for(var k in sidoMap) {
-    if(addr.indexOf(k) === 0 || addr.indexOf(sidoMap[k]) === 0) {
-      siNm = sidoMap[k];
-      break;
-    }
+    if(addr.indexOf(k) === 0 || addr.indexOf(sidoMap[k]) === 0) { siNm = sidoMap[k]; break; }
   }
   // 시군구 추출
-  var sggNm = '';
-  var m = addr.match(/(\S+시|\S+군|\S+구)(?:\s|$)/);
-  if(m) sggNm = m[1];
-  // 나머지를 bldNm으로 — 동+번지 사이 공백 제거해서 검색 정확도 높이기
-  var bldNm = addr.replace(/^(서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)\s*/,'').trim();
-  // 시군구명도 제거
-  if(sggNm) bldNm = bldNm.replace(sggNm, '').trim();
-  // "광사동 667" → "광사동667" 붙이기
-  bldNm = bldNm.replace(/(\S+동|\S+가|\S+리)\s+([\d])/g, '$1$2');
-  return { siNm: siNm, sggNm: sggNm, bldNm: bldNm };
+  var sggMatch = addr.match(/([가-힣]+(?:시|군|구))(?:\s|$)/);
+  var sggNm = sggMatch ? sggMatch[1] : '';
+
+  if(isSeoul && gu && dong && bun) {
+    var sigunguCd = SIGUNGU_MAP[gu];
+    var bjdongCd = BJDONG_MAP[gu+' '+dong];
+    if(sigunguCd && bjdongCd) {
+      return { mode: 'code', sigunguCd: sigunguCd, bjdongCd: bjdongCd, bun: bun.padStart(4,'0'), ji: ji.padStart(4,'0') };
+    }
+  }
+  // 코드 방식 실패 or 서울 외 → 텍스트 방식
+  // bldNm: 동+번지 (예: "운남동1745-8")
+  var bldNm = dong ? (dong + (bun ? bun+(ji!=='0'?'-'+ji:'') : '')) : '';
+  return { mode: 'text', siNm: siNm, sggNm: sggNm, bldNm: bldNm, dong: dong };
+}
+
+function buildPermitUrl(params) {
+  if(params.mode === 'code') {
+    return PERMIT_BASE + '?serviceKey=' + PERMIT_API_KEY
+      + '&numOfRows=10&pageNo=1&_type=json'
+      + '&sigunguCd=' + params.sigunguCd
+      + '&bjdongCd=' + params.bjdongCd
+      + '&bun=' + params.bun
+      + '&ji=' + params.ji;
+  } else {
+    var url = PERMIT_BASE + '?serviceKey=' + PERMIT_API_KEY + '&numOfRows=10&pageNo=1&_type=json';
+    if(params.bldNm)  url += '&bldNm='  + encodeURIComponent(params.bldNm);
+    if(params.siNm)   url += '&siNm='   + encodeURIComponent(params.siNm);
+    if(params.sggNm)  url += '&sggNm='  + encodeURIComponent(params.sggNm);
+    return url;
+  }
 }
 
 function doSeumterSearch() {
   var addr = document.getElementById('stAddr').value.trim();
   if(!addr){ document.getElementById('stMsg').textContent = '주소를 입력해주세요'; return; }
-
-  var parsed = parseAddrForText(addr);
-  if(!parsed.bldNm) {
-    document.getElementById('stMsg').textContent = '⚠️ 주소를 다시 확인해주세요';
-    return;
-  }
-
   document.getElementById('stMsg').textContent = '조회 중...';
   document.getElementById('stSearchBtn').textContent = '조회 중...';
   document.getElementById('stResults').innerHTML = '';
 
-  var API_KEY = '72431c2bcf460c1a68ecb74df38d3204e3bcb01a4ddd87210172846f921305fe';
-  var url = 'https://apis.data.go.kr/1613000/ArchPmsHubService/getApBasisOulnInfo'
-    + '?serviceKey=' + API_KEY
-    + '&numOfRows=10&pageNo=1&_type=json'
-    + '&bldNm=' + encodeURIComponent(parsed.bldNm);
-  if(parsed.siNm)  url += '&siNm='  + encodeURIComponent(parsed.siNm);
-  if(parsed.sggNm) url += '&sggNm=' + encodeURIComponent(parsed.sggNm);
+  var parsed = parseAddrSmart(addr);
+  var url = buildPermitUrl(parsed);
 
+  fetchPermit(url, function(items, total) {
+    document.getElementById('stSearchBtn').textContent = '조회';
+    if(items && items.length > 0) {
+      renderPermitResults(items, total);
+    } else if(parsed.mode === 'code') {
+      // 코드 방식 실패 → 텍스트 방식으로 재시도
+      document.getElementById('stMsg').textContent = '코드 검색 결과 없음, 이름으로 재검색 중...';
+      var guMatch = addr.match(/([가-힣]+구)/);
+      var gu = guMatch ? guMatch[1] : '';
+      var dongMatch = addr.match(/([가-힣0-9]+(?:동|가|리))/);
+      var dong = dongMatch ? dongMatch[1] : '';
+      var bunMatch = addr.match(/([가-힣]+(?:동|가|리))\s*([0-9]+)(?:[-]([0-9]+))?/);
+      var bun = bunMatch ? bunMatch[2] : '';
+      var ji2 = bunMatch ? (bunMatch[3]||'0') : '0';
+      var bldNm = dong ? (dong + (bun ? bun+(ji2!=='0'?'-'+ji2:'') : '')) : '';
+      var url2 = PERMIT_BASE + '?serviceKey=' + PERMIT_API_KEY + '&numOfRows=10&pageNo=1&_type=json'
+        + '&bldNm=' + encodeURIComponent(bldNm) + '&siNm=' + encodeURIComponent('서울특별시');
+      if(gu) url2 += '&sggNm=' + encodeURIComponent(gu);
+      fetchPermit(url2, function(items2, total2) {
+        document.getElementById('stSearchBtn').textContent = '조회';
+        if(items2 && items2.length > 0) {
+          renderPermitResults(items2, total2);
+        } else {
+          showNoResult();
+        }
+      });
+    } else if(parsed.mode === 'text' && parsed.dong) {
+      // 동이름만으로 재시도
+      document.getElementById('stMsg').textContent = '결과 없음, 동 이름으로 재검색 중...';
+      var url3 = PERMIT_BASE + '?serviceKey=' + PERMIT_API_KEY + '&numOfRows=10&pageNo=1&_type=json'
+        + '&bldNm=' + encodeURIComponent(parsed.dong);
+      if(parsed.siNm)  url3 += '&siNm='  + encodeURIComponent(parsed.siNm);
+      if(parsed.sggNm) url3 += '&sggNm=' + encodeURIComponent(parsed.sggNm);
+      fetchPermit(url3, function(items3, total3) {
+        document.getElementById('stSearchBtn').textContent = '조회';
+        if(items3 && items3.length > 0) {
+          renderPermitResults(items3, total3);
+        } else {
+          showNoResult();
+        }
+      });
+    } else {
+      showNoResult();
+    }
+  });
+}
+
+function fetchPermit(url, cb) {
   fetch(url)
     .then(function(res){ return res.text(); })
     .then(function(text) {
-      document.getElementById('stSearchBtn').textContent = '조회';
-      // XML 응답이면 결과 없음 처리
-      if(text.trim().startsWith('<')) {
-        document.getElementById('stMsg').textContent = '결과가 없습니다';
-        document.getElementById('stResults').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--tx3)">결과가 없습니다.<br>검색어를 바꿔보세요.<br><span style="font-size:10px;color:var(--tx3)">예: 광사동667 / 자곡동424</span></div>';
-        return;
-      }
+      if(text.trim().startsWith('<')) { cb(null, 0); return; }
       try {
         var data = JSON.parse(text);
-        var body = data.response.body;
+        var body = data.response ? data.response.body : null;
+        if(!body) { cb(null, 0); return; }
         var total = parseInt(body.totalCount)||0;
-        document.getElementById('stMsg').textContent = '총 ' + total + '건 조회됨';
-        if(total === 0 || !body.items || !body.items.item) {
-          document.getElementById('stResults').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--tx3)">결과가 없습니다.<br>검색어를 바꿔보세요.<br><span style="font-size:10px;color:var(--tx3)">예: 광사동667 / 자곡동424</span></div>';
-          return;
-        }
+        if(total === 0 || !body.items || !body.items.item) { cb(null, 0); return; }
         var items = Array.isArray(body.items.item) ? body.items.item : [body.items.item];
-        var html = items.map(function(item, i) {
-          var ug = parseInt(item.ugrndFlrCnt)||0, gr = parseInt(item.grndFlrCnt)||0;
-          var floor = (ug>0?'지하'+ug+'층 ':'')+(gr>0?'지상'+gr+'층':'');
-          return '<div onclick="applySeumterItem('+i+')" style="padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--br);margin-bottom:7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--utaa)\';this.style.background=\'var(--utaa-bg)\'" onmouseout="this.style.borderColor=\'var(--br)\';this.style.background=\'\'">'
-            +'<div style="font-size:12px;font-weight:500;margin-bottom:4px">'+(item.bldNm||'(건물명 없음)')+'<span style="font-size:10px;font-weight:400;color:var(--tx3);margin-left:6px">'+(item.platPlc||'')+'</span></div>'
-            +'<div style="font-size:11px;color:var(--tx2);line-height:1.8">'
-            +'허가접수: <b>'+(item.rcvDay||'—')+'</b> &nbsp;허가완료: <b>'+(item.pmsDay||item.archPmsDay||'—')+'</b><br>'
-            +'용도: '+(item.mainPurpsCdNm||'—')+' &nbsp;|&nbsp; 층수: '+(floor||'—')+'<br>'
-            +'대지: '+(item.platArea||'—')+'㎡ &nbsp;연면적: '+(item.totArea||'—')+'㎡'
-            +'</div>'
-            +'<div style="margin-top:6px;font-size:10px;color:var(--utaa);font-weight:500">클릭하면 이 항목으로 필드 자동입력 →</div>'
-            +'</div>';
-        }).join('');
-        document.getElementById('stResults').innerHTML = html;
-        window._stItems = items;
+        cb(items, total);
       } catch(e) {
         document.getElementById('stMsg').textContent = '❌ 파싱 오류: ' + e.message;
+        cb(null, 0);
       }
     })
     .catch(function(err) {
-      document.getElementById('stSearchBtn').textContent = '조회';
       document.getElementById('stMsg').textContent = '❌ 오류: ' + err.message;
+      cb(null, 0);
     });
+}
+
+function renderPermitResults(items, total) {
+  document.getElementById('stMsg').textContent = '총 ' + total + '건 조회됨';
+  var html = items.map(function(item, i) {
+    var ug = parseInt(item.ugrndFlrCnt)||0, gr = parseInt(item.grndFlrCnt)||0;
+    var floor = (ug>0?'지하'+ug+'층 ':'')+( gr>0?'지상'+gr+'층':'');
+    return '<div onclick="applySeumterItem('+i+')" style="padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--br);margin-bottom:7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--utaa)\';this.style.background=\'var(--utaa-bg)\'" onmouseout="this.style.borderColor=\'var(--br)\';this.style.background=\'\'">'
+      +'<div style="font-size:12px;font-weight:500;margin-bottom:4px">'+(item.bldNm||'(건물명 없음)')+'<span style="font-size:10px;font-weight:400;color:var(--tx3);margin-left:6px">'+( item.platPlc||'')+'</span></div>'
+      +'<div style="font-size:11px;color:var(--tx2);line-height:1.8">'
+      +'허가접수: <b>'+(item.rcvDay||'—')+'</b> &nbsp;허가완료: <b>'+(item.pmsDay||item.archPmsDay||'—')+'</b><br>'
+      +'용도: '+(item.mainPurpsCdNm||'—')+' &nbsp;|&nbsp; 층수: '+(floor||'—')+'<br>'
+      +'대지: '+(item.platArea||'—')+'㎡ &nbsp;연면적: '+(item.totArea||'—')+'㎡'
+      +'</div>'
+      +'<div style="margin-top:6px;font-size:10px;color:var(--utaa);font-weight:500">클릭하면 이 항목으로 필드 자동입력 →</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('stResults').innerHTML = html;
+  window._stItems = items;
+}
+
+function showNoResult() {
+  document.getElementById('stMsg').textContent = '결과가 없습니다';
+  document.getElementById('stResults').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--tx3)">결과를 찾지 못했습니다.<br><br>'
+    +'<span style="font-size:11px;color:var(--tx2)">다음 형식으로 다시 시도해보세요:</span><br>'
+    +'<span style="font-size:11px;color:var(--utaa)">서울 강남구 자곡동 424-9<br>경기 양주시 광사동 667<br>인천 중구 운남동 1745-8</span></div>';
 }
 
 function applySeumterItem(i) {
   var item = window._stItems[i];
   if(!item) return;
-  // 허가접수일 → dPermitApply
   if(item.rcvDay && item.rcvDay.length===8) {
     var d = item.rcvDay;
     document.getElementById('dPermitApply').value = d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8);
   }
-  // 허가완료일 → dPermitDone
   var pmsDay = item.pmsDay || item.archPmsDay;
   if(pmsDay && pmsDay.length===8) {
     document.getElementById('dPermitDone').value = pmsDay.slice(0,4)+'-'+pmsDay.slice(4,6)+'-'+pmsDay.slice(6,8);
   }
-  // 면적
   if(item.platArea) document.getElementById('fAreaS').value = item.platArea;
   if(item.totArea)  document.getElementById('fAreaT').value = item.totArea;
-  // 층수
   var ug = parseInt(item.ugrndFlrCnt)||0, gr = parseInt(item.grndFlrCnt)||0;
-  if(ug||gr) document.getElementById('fFloor').value = (ug>0?'지하'+ug+'층 ':'')+(gr>0?'지상'+gr+'층':'');
-  // 계산 갱신
+  if(ug||gr) document.getElementById('fFloor').value = (ug>0?'지하'+ug+'층 ':'')+( gr>0?'지상'+gr+'층':'');
   calcAllPerPy(); calcDesignPeriod(); calcPermitPeriod(); renderTimeline();
   closeSeumterModal();
-  // 성공 토스트
   var toast = document.createElement('div');
   toast.textContent = '✅ 인허가 정보가 적용되었습니다';
   toast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;font-size:12px;padding:9px 18px;border-radius:20px;z-index:9999;pointer-events:none;opacity:1;transition:opacity .4s';
