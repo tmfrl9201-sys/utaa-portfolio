@@ -296,9 +296,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <label>주소</label>
             <div style="display:flex;gap:6px;align-items:center">
               <input id="fAddr" placeholder="서울특별시 강남구 논현동 000-00" oninput="updateEpSub()" style="flex:1">
-              <button onclick="openSeumterModal()" style="flex-shrink:0;padding:5px 10px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg2);color:var(--tx2);font-size:11px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:all .15s" onmouseover="this.style.borderColor='var(--utaa)';this.style.color='var(--utaa)'" onmouseout="this.style.borderColor='var(--br2)';this.style.color='var(--tx2)'">
+              <button id="seumterBtn" onclick="openSeumterModal()" style="flex-shrink:0;padding:5px 10px;border-radius:var(--r);border:0.5px solid var(--br2);background:var(--bg2);color:var(--tx2);font-size:11px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:all .15s" onmouseover="this.style.borderColor='var(--utaa)';this.style.color='var(--utaa)'" onmouseout="this.style.borderColor='var(--br2)';this.style.color='var(--tx2)'">
                 <i class="ti ti-search" style="font-size:11px"></i> 세움터 조회
               </button>
+            </div>
+            <!-- 보기모드: 세움터 연동 정보 표시 -->
+            <div id="seumterInfoView" style="display:none;margin-top:6px;padding:8px 10px;border-radius:var(--r);background:var(--utaa-bg);border:0.5px solid var(--utaa);font-size:11px;color:var(--tx2);line-height:2">
+              <span style="font-size:10px;font-weight:600;color:var(--utaa);margin-right:6px"><i class="ti ti-building-arch"></i> 세움터 연동</span>
+              <span id="seumterInfoText"></span>
             </div>
           </div>
           <div class="fr">
@@ -647,6 +652,8 @@ function setEditMode(on) {
   var ep = document.getElementById('editPanel');
   var btn = document.getElementById('editModeBtn');
   var footer = document.getElementById('epFooter');
+  var seumterBtn = document.getElementById('seumterBtn');
+  var seumterInfoView = document.getElementById('seumterInfoView');
   if (on) {
     ep.classList.remove('view-mode');
     btn.innerHTML = '<i class="ti ti-device-floppy" style="font-size:11px"></i> 저장';
@@ -654,6 +661,8 @@ function setEditMode(on) {
     btn.style.color = '#fff';
     btn.style.borderColor = 'var(--utaa)';
     if (footer) footer.style.display = 'flex';
+    if (seumterBtn) seumterBtn.style.display = 'flex';
+    if (seumterInfoView) seumterInfoView.style.display = 'none';
   } else {
     ep.classList.add('view-mode');
     btn.innerHTML = '<i class="ti ti-pencil" style="font-size:11px"></i> 편집';
@@ -661,6 +670,9 @@ function setEditMode(on) {
     btn.style.color = '#3B6D11';
     btn.style.borderColor = 'var(--utaa)';
     if (footer) footer.style.display = 'none';
+    if (seumterBtn) seumterBtn.style.display = 'none';
+    // 세움터 연동 정보 표시
+    updateSeumterInfoView();
     // textarea 높이 내용에 맞게 자동 조절
     ep.querySelectorAll('textarea').forEach(function(ta) {
       ta.style.height = 'auto';
@@ -1495,11 +1507,37 @@ function applySeumterItem(i) {
   if(ug||gr) document.getElementById('fFloor').value = (ug>0?'지하'+ug+'층 ':'')+( gr>0?'지상'+gr+'층':'');
   calcAllPerPy(); calcDesignPeriod(); calcPermitPeriod(); renderTimeline();
   closeSeumterModal();
+  // 자동 저장
+  saveProject();
   var toast = document.createElement('div');
-  toast.textContent = '✅ 인허가 정보가 적용되었습니다';
+  toast.textContent = '✅ 인허가 정보가 적용 및 저장되었습니다';
   toast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;font-size:12px;padding:9px 18px;border-radius:20px;z-index:9999;pointer-events:none;opacity:1;transition:opacity .4s';
   document.body.appendChild(toast);
   setTimeout(function(){ toast.style.opacity='0'; setTimeout(function(){ document.body.removeChild(toast); },400); },2000);
+}
+
+function updateSeumterInfoView() {
+  var infoView = document.getElementById('seumterInfoView');
+  var infoText = document.getElementById('seumterInfoText');
+  if(!infoView || !infoText) return;
+  var permitApply = document.getElementById('dPermitApply').value;
+  var permitDone  = document.getElementById('dPermitDone').value;
+  var areaS = document.getElementById('fAreaS').value;
+  var areaT = document.getElementById('fAreaT').value;
+  var floor = document.getElementById('fFloor').value;
+  // 하나라도 있으면 표시
+  var parts = [];
+  if(permitApply) parts.push('허가접수 ' + permitApply);
+  if(permitDone)  parts.push('허가완료 ' + permitDone);
+  if(areaS)       parts.push('대지 ' + areaS + '㎡');
+  if(areaT)       parts.push('연면적 ' + areaT + '㎡');
+  if(floor)       parts.push(floor);
+  if(parts.length > 0) {
+    infoText.textContent = parts.join(' · ');
+    infoView.style.display = '';
+  } else {
+    infoView.style.display = 'none';
+  }
 }
 
 loadFromSheet();
