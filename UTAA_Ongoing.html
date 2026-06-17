@@ -1216,6 +1216,8 @@ document.head.appendChild(style);
 // ── 세움터 조회 ────────────────────────────────────────────────────
 var PERMIT_API_KEY = '72431c2bcf460c1a68ecb74df38d3204e3bcb01a4ddd87210172846f921305fe';
 var PERMIT_BASE = 'https://apis.data.go.kr/1613000/ArchPmsHubService/getApBasisOulnInfo';
+var JUSO_API_KEY = 'U01TX0FVVEgyMDI2MDYxNzIwMjc1MjExOTQ0NTQ=';
+var JUSO_BASE = 'https://business.juso.go.kr/addrlink/addrLinkApi.do';
 
 // 서울 시군구코드 맵
 var SIGUNGU_MAP = {
@@ -1260,6 +1262,25 @@ document.getElementById('seumterModal').addEventListener('click', function(e){
 });
 
 // 주소 파싱 — 서울이면 코드 방식, 서울 외면 텍스트 방식
+// 도로명주소 API로 법정동코드 조회 후 세움터 검색
+function searchWithJusoApi(addr, cb) {
+  var url = JUSO_BASE + '?confmKey=' + JUSO_API_KEY
+    + '&currentPage=1&countPerPage=5'
+    + '&keyword=' + encodeURIComponent(addr)
+    + '&resultType=json&hstryYn=N&relJibun=Y';
+  fetch(url)
+    .then(function(res){ return res.json(); })
+    .then(function(data) {
+      var results = data.results;
+      if(!results || !results.juso || results.juso.length === 0) {
+        cb(null);
+        return;
+      }
+      cb(results.juso);
+    })
+    .catch(function(){ cb(null); });
+}
+
 function parseAddrSmart(addr) {
   addr = addr.trim();
   // 서울 여부 판별
@@ -1317,13 +1338,49 @@ function buildPermitUrl(params) {
 function doSeumterSearch() {
   var addr = document.getElementById('stAddr').value.trim();
   if(!addr){ document.getElementById('stMsg').textContent = '주소를 입력해주세요'; return; }
-  document.getElementById('stMsg').textContent = '조회 중...';
+  document.getElementById('stMsg').textContent = '주소 조회 중...';
   document.getElementById('stSearchBtn').textContent = '조회 중...';
   document.getElementById('stResults').innerHTML = '';
 
+  // 1단계: 도로명주소 API로 법정동코드 조회
+  searchWithJusoApi(addr, function(jusoList) {
+    if(jusoList && jusoList.length > 0) {
+      // 지번 포함된 결과 우선
+      var juso = jusoList[0];
+      // admCd: 행정구역코드(10자리) → sigunguCd(5자리) + bjdongCd(5자리)
+      var admCd = juso.admCd || '';
+      var sigunguCd = admCd.substring(0, 5);
+      var bjdongCd  = admCd.substring(5, 10);
+      var bun = (juso.lnbrMnnm || '0').padStart(4, '0');
+      var ji  = (juso.lnbrSlno || '0').padStart(4, '0');
+      if(sigunguCd && bjdongCd && bun) {
+        document.getElementById('stMsg').textContent = '인허가 정보 조회 중...';
+        var url = PERMIT_BASE + '?serviceKey=' + PERMIT_API_KEY
+          + '&numOfRows=10&pageNo=1&_type=json'
+          + '&sigunguCd=' + sigunguCd
+          + '&bjdongCd=' + bjdongCd
+          + '&bun=' + bun
+          + '&ji=' + ji;
+        fetchPermit(url, function(items, total) {
+          document.getElementById('stSearchBtn').textContent = '조회';
+          if(items && items.length > 0) {
+            renderPermitResults(items, total);
+          } else {
+            // 코드 검색 실패 시 기존 스마트 방식으로 폴백
+            fallbackSearch(addr);
+          }
+        });
+        return;
+      }
+    }
+    // 도로명주소 API 실패 시 기존 스마트 방식으로
+    fallbackSearch(addr);
+  });
+}
+
+function fallbackSearch(addr) {
   var parsed = parseAddrSmart(addr);
   var url = buildPermitUrl(parsed);
-
   fetchPermit(url, function(items, total) {
     document.getElementById('stSearchBtn').textContent = '조회';
     if(items && items.length > 0) {
