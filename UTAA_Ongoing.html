@@ -1276,38 +1276,58 @@ document.getElementById('seumterModal').addEventListener('click', function(e){
 // 주소 파싱 — 서울이면 코드 방식, 서울 외면 텍스트 방식
 // 도로명주소 API로 법정동코드 조회 후 세움터 검색
 function searchWithJusoApi(addr, cb) {
-  // 검색어 최적화: "경기 성남시 운중동 894-4" → "성남시 운중동 894" (시도 제거, 부번 제거)
   var keyword = addr.trim();
   // 시도명 제거
   keyword = keyword.replace(/^(서울특별시?|부산광역시?|대구광역시?|인천광역시?|광주광역시?|대전광역시?|울산광역시?|세종특별자치시?|경기도?|강원도?|충청북도?|충북|충청남도?|충남|전북특별자치도?|전북|전라남도?|전남|경상북도?|경북|경상남도?|경남|제주특별자치도?|제주)\s*/,'').trim();
   // 부번(-숫자) 제거: "운중동 894-4" → "운중동 894"
-  keyword = keyword.replace(/(\d+)-\d+$/, '$1').trim();
+  var keywordNoBu = keyword.replace(/(\d+)-\d+$/, '$1').trim();
 
-  var url = JUSO_BASE + '?confmKey=' + JUSO_API_KEY
-    + '&currentPage=1&countPerPage=10'
-    + '&keyword=' + encodeURIComponent(keyword)
-    + '&resultType=json&hstryYn=N&relJibun=Y';
-  fetch(url)
-    .then(function(res){ return res.json(); })
-    .then(function(data) {
-      var results = data.results;
-      if(!results || !results.juso || results.juso.length === 0) {
-        cb(null);
-        return;
-      }
-      // 원래 입력한 번지와 가장 가까운 결과 우선 정렬
+  function doFetch(kw, onResult) {
+    var url = JUSO_BASE + '?confmKey=' + JUSO_API_KEY
+      + '&currentPage=1&countPerPage=10'
+      + '&keyword=' + encodeURIComponent(kw)
+      + '&resultType=json&hstryYn=N&relJibun=Y';
+    fetch(url)
+      .then(function(res){ return res.json(); })
+      .then(function(data) {
+        var results = data.results;
+        if(!results || !results.juso || results.juso.length === 0) { onResult(null); return; }
+        onResult(results.juso);
+      })
+      .catch(function(){ onResult(null); });
+  }
+
+  // 1차: 부번 제거 검색
+  doFetch(keywordNoBu, function(jusoList) {
+    if(jusoList && jusoList.length > 0) {
+      // 원래 번지와 가장 가까운 결과 우선
       var origBun = addr.match(/(\d+)(?:-\d+)?$/);
       if(origBun) {
         var bunNum = origBun[1];
-        results.juso.sort(function(a, b) {
-          var aMatch = a.lnbrMnnm === bunNum ? 0 : 1;
-          var bMatch = b.lnbrMnnm === bunNum ? 0 : 1;
-          return aMatch - bMatch;
+        jusoList.sort(function(a, b) {
+          return (a.lnbrMnnm===bunNum?0:1) - (b.lnbrMnnm===bunNum?0:1);
         });
       }
-      cb(results.juso);
-    })
-    .catch(function(){ cb(null); });
+      cb(jusoList);
+      return;
+    }
+    // 2차: 동이름만으로 재검색 → admCd만 추출용
+    var dongMatch = keyword.match(/([가-힣0-9]+(?:동|가|리))/);
+    var sggMatch  = keyword.match(/([가-힣]+(?:시|군|구))/);
+    if(dongMatch) {
+      var dongKeyword = (sggMatch ? sggMatch[1]+' ' : '') + dongMatch[1];
+      doFetch(dongKeyword, function(jusoList2) {
+        if(jusoList2 && jusoList2.length > 0) {
+          // admCd만 빌려오고 번지는 원래 입력값 사용
+          cb(jusoList2, true); // true = admCd만 사용
+        } else {
+          cb(null);
+        }
+      });
+    } else {
+      cb(null);
+    }
+  });
 }
 
 function parseAddrSmart(addr) {
@@ -1372,7 +1392,7 @@ function doSeumterSearch() {
   document.getElementById('stResults').innerHTML = '';
 
   // 1단계: 도로명주소 API로 법정동코드 조회
-  searchWithJusoApi(addr, function(jusoList) {
+  searchWithJusoApi(addr, function(jusoList, admCdOnly) {
     if(jusoList && jusoList.length > 0) {
       var juso = jusoList[0];
       var admCd = juso.admCd || '';
@@ -1381,7 +1401,7 @@ function doSeumterSearch() {
       // 원래 입력 주소에서 본번/부번 추출
       var bunMatch = addr.match(/(\d+)(?:-(\d+))?(?:\s*)$/);
       var bun = bunMatch ? bunMatch[1].padStart(4,'0') : (juso.lnbrMnnm||'0').padStart(4,'0');
-      var ji  = bunMatch && bunMatch[2] ? bunMatch[2].padStart(4,'0') : (juso.lnbrSlno||'0').padStart(4,'0');
+      var ji  = bunMatch && bunMatch[2] ? bunMatch[2].padStart(4,'0') : (admCdOnly ? '0000' : (juso.lnbrSlno||'0').padStart(4,'0'));
       console.log('[세움터] admCd:', admCd, 'sigunguCd:', sigunguCd, 'bjdongCd:', bjdongCd, 'bun:', bun, 'ji:', ji);
       if(sigunguCd && bjdongCd && bun) {
         document.getElementById('stMsg').textContent = '인허가 정보 조회 중...';
