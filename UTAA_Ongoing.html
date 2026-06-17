@@ -1382,6 +1382,7 @@ function doSeumterSearch() {
       var bunMatch = addr.match(/(\d+)(?:-(\d+))?(?:\s*)$/);
       var bun = bunMatch ? bunMatch[1].padStart(4,'0') : (juso.lnbrMnnm||'0').padStart(4,'0');
       var ji  = bunMatch && bunMatch[2] ? bunMatch[2].padStart(4,'0') : (juso.lnbrSlno||'0').padStart(4,'0');
+      console.log('[세움터] admCd:', admCd, 'sigunguCd:', sigunguCd, 'bjdongCd:', bjdongCd, 'bun:', bun, 'ji:', ji);
       if(sigunguCd && bjdongCd && bun) {
         document.getElementById('stMsg').textContent = '인허가 정보 조회 중...';
         var url = PERMIT_BASE + '?serviceKey=' + PERMIT_API_KEY
