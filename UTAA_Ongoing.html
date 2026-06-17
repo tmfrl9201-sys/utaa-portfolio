@@ -1289,8 +1289,12 @@ function parseAddrForText(addr) {
   var sggNm = '';
   var m = addr.match(/(\S+시|\S+군|\S+구)(?:\s|$)/);
   if(m) sggNm = m[1];
-  // 나머지를 bldNm으로
+  // 나머지를 bldNm으로 — 동+번지 사이 공백 제거해서 검색 정확도 높이기
   var bldNm = addr.replace(/^(서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)\s*/,'').trim();
+  // 시군구명도 제거
+  if(sggNm) bldNm = bldNm.replace(sggNm, '').trim();
+  // "광사동 667" → "광사동667" 붙이기
+  bldNm = bldNm.replace(/(\S+동|\S+가|\S+리)\s+([\d])/g, '$1$2');
   return { siNm: siNm, sggNm: sggNm, bldNm: bldNm };
 }
 
@@ -1317,15 +1321,22 @@ function doSeumterSearch() {
   if(parsed.sggNm) url += '&sggNm=' + encodeURIComponent(parsed.sggNm);
 
   fetch(url)
-    .then(function(res){ return res.json(); })
-    .then(function(data) {
+    .then(function(res){ return res.text(); })
+    .then(function(text) {
       document.getElementById('stSearchBtn').textContent = '조회';
+      // XML 응답이면 결과 없음 처리
+      if(text.trim().startsWith('<')) {
+        document.getElementById('stMsg').textContent = '결과가 없습니다';
+        document.getElementById('stResults').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--tx3)">결과가 없습니다.<br>검색어를 바꿔보세요.<br><span style="font-size:10px;color:var(--tx3)">예: 광사동667 / 자곡동424</span></div>';
+        return;
+      }
       try {
+        var data = JSON.parse(text);
         var body = data.response.body;
         var total = parseInt(body.totalCount)||0;
         document.getElementById('stMsg').textContent = '총 ' + total + '건 조회됨';
         if(total === 0 || !body.items || !body.items.item) {
-          document.getElementById('stResults').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--tx3)">결과가 없습니다.<br>주소를 다시 확인해주세요.</div>';
+          document.getElementById('stResults').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--tx3)">결과가 없습니다.<br>검색어를 바꿔보세요.<br><span style="font-size:10px;color:var(--tx3)">예: 광사동667 / 자곡동424</span></div>';
           return;
         }
         var items = Array.isArray(body.items.item) ? body.items.item : [body.items.item];
