@@ -664,11 +664,12 @@ function setEditMode(on) {
     if (footer) footer.style.display = 'flex';
     if (seumterBtn) seumterBtn.style.display = 'flex';
     if (seumterInfoView) seumterInfoView.style.display = 'none';
-    // 편집모드: 숨겼던 필드 다시 표시
+    // 편집모드: placeholder 복원
+    var placeholders = {fManagerDirect:'02-000-0000', fManagerShort:'1234', fFloor:'지상 5층', fAreaS:'182', fAreaT:'509'};
     ['fManagerDirect','fManagerShort','fFloor','fAreaS','fAreaT'].forEach(function(id) {
       var el = document.getElementById(id);
-      if(!el) return;
-      var fld = el.closest('.fld');
+      if(el) el.setAttribute('placeholder', placeholders[id]);
+      var fld = el ? el.closest('.fld') : null;
       if(fld) fld.style.display = '';
     });
     // 편집모드: 준공완료 버튼 숨김
@@ -686,12 +687,13 @@ function setEditMode(on) {
     var completeBtnBottom = document.getElementById('completeBtnBottom');
     if(completeBtnBottom) completeBtnBottom.style.display = '';
     // 세움터 연동 정보 표시
-    // 보기모드: 빈 값인 필드 숨기기
+    // 보기모드: 빈 값인 필드는 — 표시 (placeholder 안 보이게)
     ['fManagerDirect','fManagerShort','fFloor','fAreaS','fAreaT'].forEach(function(id) {
       var el = document.getElementById(id);
       if(!el) return;
-      var fld = el.closest('.fld');
-      if(fld) fld.style.display = el.value.trim() ? '' : 'none';
+      if(!el.value.trim()) {
+        el.setAttribute('placeholder', '—');
+      }
     });
     updateSeumterInfoView();
     // textarea 높이 내용에 맞게 자동 조절
