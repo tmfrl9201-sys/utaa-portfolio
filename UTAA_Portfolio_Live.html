@@ -213,15 +213,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
   body{background:#fff;margin:0;padding:0}
   html{margin:0;padding:0}
   .wrap{display:none!important}
-  .pf-topbar{display:none!important}
   #pArea{display:block!important;margin:0;padding:0;border:0}
   .pc,.pa,.pp,.psubtitle,.pcontact{
     margin:0!important;
     box-sizing:border-box;
     overflow:hidden;
-    page-break-inside:avoid;
   }
-  .pa{page-break-after:avoid}
   @page{size:A4 landscape;margin:0mm}
 }
 #pArea{display:none;margin:0;padding:0}
@@ -405,7 +402,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
   </div>
   <div style="padding:16px 20px;border-bottom:0.5px solid var(--br);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <span id="fmTitle" style="font-size:15px;font-weight:500">새 프로젝트</span>
-    <button class="btn" id="cancelBtn" style="height:28px;padding:0 10px">취소</button>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button id="rollbackBtn" onclick="rollbackToOngoing()" style="display:none;height:28px;padding:0 10px;border-radius:var(--r);border:0.5px solid #e0a0a0;background:#fff5f5;color:#c00;font-size:11px;font-weight:500;cursor:pointer"><i class="ti ti-arrow-back-up" style="font-size:11px"></i> 진행중으로 되돌리기</button>
+      <button class="btn" id="cancelBtn" style="height:28px;padding:0 10px">취소</button>
+    </div>
   </div>
   <div class="fm-tabs" style="padding:0 20px">
     <button class="fm-tab on" onclick="switchFmTab('basic',this)">기본정보</button>
@@ -680,7 +680,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 </div>
 
 <script>
-var API = "https://script.google.com/macros/s/AKfycby0C8GBANg0kfmjjWoQ4VUtV4Zs6xv0SZJZsO6kN6hVaXFduw3tWFYMhfEPFwh7DiKn3Q/exec";
+var API = "https://script.google.com/macros/s/AKfycbz97Qrec7q8glBoBEi1mwlGUx96I2YnErI4nRGW93-vqHbMDqPurHkJMcHz3sBss5y0fw/exec";
 
 // ── settings 읽기/쓰기 (구글 시트 settings 탭) ──────────────────────
 function loadSettings(cb) {
@@ -937,6 +937,7 @@ function setView(v) {
 function openAdd() {
   editId = null;
   document.getElementById("fmTitle").textContent = "새 프로젝트";
+  document.getElementById("rollbackBtn").style.display = 'none';
   ["fName","fYr","fAreaT","fAreaS","fLoc","fFloor","fTeam","fContractor","fPhoto","fAward","fDesc","fUrl","imgUrl"].forEach(function(i) {
     document.getElementById(i).value = "";
   });
@@ -960,6 +961,7 @@ function openEdit(id) {
   if (!p) return;
   editId = id;
   document.getElementById("fmTitle").textContent = "프로젝트 편집";
+  document.getElementById("rollbackBtn").style.display = '';
   document.getElementById("fName").value = p.name||"";
   // 높이 자동 조절
   ['fName','fTeam'].forEach(function(id){
@@ -1100,7 +1102,29 @@ document.querySelectorAll(".ovl").forEach(function(o){o.addEventListener("click"
 document.getElementById("addBtn").addEventListener("click", openAdd);
 document.getElementById("refreshBtn").addEventListener("click", loadFromSheet);
 document.getElementById("saveBtn").addEventListener("click", saveProj);
-document.getElementById("cancelBtn").addEventListener("click", function(){closeFormPanel();});
+function rollbackToOngoing() {
+  if(!editId) return;
+  if(!confirm('이 프로젝트를 진행중으로 되돌리시겠습니까?\n포트폴리오에서 삭제되고 진행중 프로젝트로 이동합니다.')) return;
+  syncState('loading', '되돌리는 중...');
+  var qs = 'action=rollback&id=' + encodeURIComponent(editId) + '&callback=_cb' + Date.now();
+  var url = API + '?' + qs;
+  var cbName = '_cb' + Date.now().toString().slice(-8);
+  url = API + '?action=rollback&id=' + encodeURIComponent(editId) + '&callback=' + cbName;
+  window[cbName] = function(d) {
+    if(d && d.ok) {
+      projects = projects.filter(function(p){ return String(p.id) !== String(editId); });
+      syncState('ok', '진행중으로 이동됨');
+      closeFormPanel();
+      render();
+    } else {
+      syncState('err', '되돌리기 실패');
+    }
+  };
+  var s = document.createElement('script');
+  s.src = url;
+  document.body.appendChild(s);
+  setTimeout(function(){ if(document.body.contains(s)) document.body.removeChild(s); }, 8000);
+}
 // 외장재 태그 스타일 토글
 document.querySelectorAll(".fMat-chk").forEach(function(chk){
   chk.addEventListener("change", function(){
