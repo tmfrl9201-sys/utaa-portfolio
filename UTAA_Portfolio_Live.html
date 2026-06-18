@@ -1106,22 +1106,24 @@ function rollbackToOngoing() {
   if(!editId) return;
   if(!confirm('이 프로젝트를 진행중으로 되돌리시겠습니까?\n포트폴리오에서 삭제되고 진행중 프로젝트로 이동합니다.')) return;
   syncState('loading', '되돌리는 중...');
-  var qs = 'action=rollback&id=' + encodeURIComponent(editId) + '&callback=_cb' + Date.now();
-  var url = API + '?' + qs;
-  var cbName = '_cb' + Date.now().toString().slice(-8);
-  url = API + '?action=rollback&id=' + encodeURIComponent(editId) + '&callback=' + cbName;
+  var cbName = 'rollbackCb' + Date.now();
+  var url = API + '?action=rollback&id=' + encodeURIComponent(editId) + '&callback=' + cbName;
   window[cbName] = function(d) {
+    delete window[cbName];
     if(d && d.ok) {
       projects = projects.filter(function(p){ return String(p.id) !== String(editId); });
       syncState('ok', '진행중으로 이동됨');
       closeFormPanel();
       render();
     } else {
-      syncState('err', '되돌리기 실패');
+      syncState('err', '되돌리기 실패: ' + (d&&d.error||'알 수 없는 오류'));
     }
   };
   var s = document.createElement('script');
   s.src = url;
+  s.onerror = function(){
+    syncState('err', '되돌리기 실패 — 네트워크 오류');
+  };
   document.body.appendChild(s);
   setTimeout(function(){ if(document.body.contains(s)) document.body.removeChild(s); }, 8000);
 }
